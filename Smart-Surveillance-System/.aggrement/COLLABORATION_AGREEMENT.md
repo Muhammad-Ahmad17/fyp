@@ -7,7 +7,6 @@
 
 > This is a **team agreement between two FYP partners** — not a legal contract.  
 > We wrote it so we stay aligned, deliver on time, and avoid confusion.  
-> If anything here conflicts with **university policy**, the university rules win.
 
 ---
 
@@ -16,7 +15,7 @@
 | | Member A | Member B |
 |---|----------|----------|
 | **Role** | Platform, MQTT & Jetson deploy | Edge / CV development |
-| **Name** | _________________ | _________________ |
+| **Name** | Muhammad Ahmad | Uzair |
 | **Reg. No.** | _________________ | _________________ |
 | **Email** | _________________ | _________________ |
 
