@@ -1,0 +1,435 @@
+%===============================================================================
+% Member B — Implementation Guide
+% Detailed sprint breakdown + how to approach each phase
+%===============================================================================
+\documentclass[12pt,a4paper]{report}
+\input{_preamble.tex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{memberb}{Member B Implementation Guide}}
+\rfoot{Page \thepage}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\color{primary}\textbf{COMSATS University Islamabad (Lahore Campus)}}\\[0.3cm]
+{\large Department of Computer Engineering}\\[1cm]
+\rule{\textwidth}{2pt}\\[0.8cm]
+{\Huge\bfseries\color{memberb} Implementation Guide}\\[0.4cm]
+{\Large Member B --- Edge / CV Development}\\[0.2cm]
+{\large Detailed Sprint Breakdown \& Approach}\\[0.3cm]
+\rule{\textwidth}{2pt}\\[1cm]
+{\small Companion: \texttt{member\_b\_sprint\_plan.tex} $\cdot$ Master: \texttt{centralized\_sprint\_plan.tex}}\\
+\vfill
+{\large Spring--Fall 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%===============================================================================
+\chapter{Introduction}
+%===============================================================================
+
+\section{Purpose}
+
+This guide explains \textbf{how to build the CV track} week by week: dataset, training, compliance engine, and the handoff dict Member A consumes. It complements:
+
+\begin{itemize}
+    \item \texttt{.sprint/member\_b\_sprint\_plan.tex}
+    \item \texttt{finalization/DETECTION\_CLASS\_SCOPE.md} --- supervisor class list
+    \item \texttt{.prerequisite/MEMBER\_B\_PREREQUISITES.md}
+\end{itemize}
+
+\section{Your boundary}
+
+You deliver \textbf{working CV code + handoff dict}. Member A handles MQTT, Jetson deploy, and the platform. Your code lives only in \texttt{edge/inference/} and \texttt{edge/compliance\_engine/}.
+
+\section{Three-track pipeline (always keep this in mind)}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Track} & \textbf{Detects} & \textbf{Feeds compliance engine} \\
+\midrule
+Worker Detection & \texttt{worker} boxes & Positions; IoU anchor \\
+PPE Detection & \texttt{helmet}, \texttt{vest} & Associated to workers \\
+Hazard Detection & \texttt{fire}, \texttt{smoke}, \texttt{spill} & Zone-level events \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{General workflow every week}
+
+\begin{enumerate}
+    \item Jira tickets from Sprint backlog (label \texttt{member-b})
+    \item Work on feature branch under \texttt{edge/}
+    \item Push dataset labels / small files; large weights via Drive or Git LFS (agree with A)
+    \item Weekly sync: share handoff JSON samples when asked
+    \item Sunday sprint log with training metrics screenshot
+\end{enumerate}
+
+\begin{tipbox}
+You can progress \textbf{fully on laptop} until Sprint 4 --- no Jetson needed. Webcam inference is enough until Member A deploys.
+\end{tipbox}
+
+%===============================================================================
+\chapter{Sprint 1 (Weeks 1--4): Dataset \& Handoff Spec}
+%===============================================================================
+
+\section{Sprint goal}
+
+Dev environment ready; annotation pipeline running; 200+ labeled images; handoff interface documented. Align with Member A at \textbf{M0}.
+
+\begin{approachbox}
+\textbf{Order of work:}
+\begin{enumerate}
+    \item Environment + GPU check (Day 1--3)
+    \item Dataset sources identified (Week 1)
+    \item Annotation tool + guidelines doc (Week 2)
+    \item First 200 labels (Week 3)
+    \item Handoff spec + pretrained demo (Week 4)
+\end{enumerate}
+\textbf{Do not} write MQTT or touch \texttt{transport/}.
+\end{approachbox}
+
+\subsection{Week 1--2: Environment \& data sources}
+
+\begin{stepbox}{Setup}
+\begin{verbatim}
+python -m venv venv && source venv/bin/activate
+pip install ultralytics opencv-python torch torchvision
+python -c "import torch; print(torch.cuda.is_available())"
+\end{verbatim}
+Clone repo; branch \texttt{feature/b-edge-setup}; first PR adding \texttt{edge/inference/README.md}.
+\end{stepbox}
+
+\begin{stepbox}{Dataset strategy}
+Combine sources for 6 classes:
+\begin{itemize}
+    \item Public: Roboflow PPE datasets, Kaggle safety sets
+    \item Custom: campus/lab photos for your environment
+    \item Balance: ensure fire/smoke/spill not under-represented (common mistake)
+\end{itemize}
+Document sources and licenses in \texttt{edge/inference/DATASET.md}.
+\end{stepbox}
+
+\begin{stepbox}{Annotation guidelines}
+One \texttt{.txt} per image (YOLO format). Rules:
+\begin{itemize}
+    \item Tight boxes; include partially visible helmets
+    \item \texttt{worker} = full body where possible
+    \item Hazards may appear without workers in frame
+    \item Same image reviewed by consistent rules (write them down)
+\end{itemize}
+\end{stepbox}
+
+\subsection{Week 3--4: Labels \& handoff spec}
+
+\begin{stepbox}{Handoff interface (critical)}
+Document in \texttt{edge/README.md}:
+\begin{verbatim}
+def get_compliance_event(frame, zone: str) -> dict | None:
+    """
+    Returns None if no event this frame.
+    Keys: event, zone, worker_id, compliance_score,
+          confidence, detections, image_path
+    """
+\end{verbatim}
+Map each key to Member A's \texttt{contracts/events.py} --- meet Week 4 to sign off.
+\end{stepbox}
+
+\begin{stepbox}{Pretrained demo}
+Run YOLOv8n COCO-pretrained on sample images; save annotated outputs to \texttt{edge/samples/}. Proves pipeline before custom training finishes.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] 200+ images labeled (all 6 classes present)
+    \item[$\square$] \texttt{data.yaml} draft with class names
+    \item[$\square$] Handoff spec reviewed by Member A (M0)
+    \item[$\square$] Pretrained inference runs on webcam or video file
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Week 4:} Attend contract meeting. Provide 3 sample handoff JSON files (helmet\_missing, compliant, fire). You do not need to understand MQTT --- only field names match.
+\end{collabbox}
+
+\begin{pitfallbox}
+\begin{itemize}
+    \item Training on 6 classes before enough hazard images --- fire/smoke mAP will collapse
+    \item Inconsistent labels between team members --- write guidelines early
+    \item Putting MQTT publish in inference loop --- belongs to Member A
+\end{itemize}
+\end{pitfallbox}
+
+%===============================================================================
+\chapter{Sprint 2 (Weeks 5--8): Training \& Compliance Prototype}
+%===============================================================================
+
+\section{Sprint goal}
+
+500+ images; YOLOv8n training underway; IoU association + compliance prototype outputting handoff dict to console. Target val mAP $\geq$ 0.60.
+
+\begin{approachbox}
+\textbf{Order of work:}
+\begin{enumerate}
+    \item Expand dataset to 500+ (ongoing Week 5--6)
+    \item First training run YOLOv8n 640px (Week 5--6)
+    \item IoU + worker tracking stub (Week 6)
+    \item Compliance engine module (Week 7--8)
+    \item Webcam demo printing handoff dict (Week 8)
+\end{enumerate}
+\end{approachbox}
+
+\subsection{Week 5--6: Training}
+
+\begin{stepbox}{Train YOLOv8n}
+\begin{verbatim}
+yolo detect train data=data.yaml model=yolov8n.pt
+  epochs=100 imgsz=640 batch=16 patience=20
+\end{verbatim}
+Monitor \texttt{mAP50} on val set. Save best \texttt{weights/best.pt}. Log curves screenshot for sprint log.
+\end{stepbox}
+
+\begin{stepbox}{IoU association}
+Implement pure Python (no ML):
+\begin{enumerate}
+    \item For each worker box, find helmet/vest boxes with IoU $>$ threshold (start 0.3)
+    \item Assign stable \texttt{worker\_id} via centroid distance across frames
+    \item Unit test: synthetic boxes $\rightarrow$ expected associations
+\end{enumerate}
+\end{stepbox}
+
+\subsection{Week 7--8: Compliance engine}
+
+\begin{stepbox}{Compliance logic}
+File: \texttt{edge/compliance\_engine/engine.py}
+\begin{itemize}
+    \item Load zone rules from YAML (helmet + vest required per zone)
+    \item Missing associated helmet $\rightarrow$ \texttt{helmet\_missing}
+    \item Rolling 5-frame score per worker
+    \item Debounce: same worker + event within 60s $\rightarrow$ suppress
+    \item Hazard classes: if fire/smoke/spill detected $\rightarrow$ immediate event (no worker IoU)
+\end{itemize}
+\end{stepbox}
+
+\begin{stepbox}{Evidence capture}
+On violation: save frame to \texttt{evidence/\{session\}/frame\_NNN.jpg}; set \texttt{image\_path} in dict. Member A will upload to MinIO later --- path string must be consistent.
+\end{stepbox}
+
+\begin{stepbox}{Console demo}
+Main loop: webcam $\rightarrow$ infer $\rightarrow$ compliance $\rightarrow$ \texttt{print(json.dumps(event))}. Record 30s video for sprint review.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] Val mAP@0.5 $\geq$ 0.60 (improving)
+    \item[$\square$] IoU tests pass
+    \item[$\square$] Debounce prevents spam in console
+    \item[$\square$] Sample handoff JSON files delivered to A (Week 8 integration)
+\end{itemize}
+\end{verifybox}
+
+%===============================================================================
+\chapter{Sprint 3 (Weeks 9--12): Model Finalization \& PR Merge}
+%===============================================================================
+
+\section{Sprint goal}
+
+1000+ images; mAP@0.5 $\geq$ 0.70; ONNX export; PRs merged. Member A handoff harness passes. \textbf{M2}.
+
+\begin{approachbox}
+\textbf{Focus order:}
+\begin{enumerate}
+    \item Fix weakest classes first (inspect confusion matrix)
+    \item Retrain with augmentation (flip, brightness --- not excessive blur)
+    \item Freeze weights; export ONNX
+    \item Clean PRs with README + requirements
+\end{enumerate}
+Optional gloves/boots only if core 6 classes already $\geq$ 0.70.
+\end{approachbox}
+
+\subsection{Week 9--10: Reach mAP target}
+
+\begin{stepbox}{Per-class analysis}
+Generate confusion matrix; if \texttt{smoke} confused with \texttt{fire}, add more distinct smoke images. Document in \texttt{edge/inference/EVAL.md}:
+\begin{itemize}
+    \item Overall mAP@0.5, precision, recall
+    \item Per-class AP
+    \item Test set size and split method
+\end{itemize}
+\end{stepbox}
+
+\begin{stepbox}{Hazard track validation}
+Test video clips: spill on floor, smoke-like steam, small fire images. Hazards must emit events without worker in frame.
+\end{stepbox}
+
+\subsection{Week 11--12: Export \& merge}
+
+\begin{stepbox}{Export for Member A}
+\begin{verbatim}
+yolo export model=best.pt format=onnx imgsz=640
+\end{verbatim}
+Package: \texttt{best.pt}, \texttt{best.onnx}, \texttt{requirements.txt}, \texttt{EVAL.md}, \texttt{README.md} setup steps. Share via Drive link in Jira ticket.
+\end{stepbox}
+
+\begin{stepbox}{Pull requests}
+\begin{itemize}
+    \item PR1: \texttt{edge/inference/} (model loader, inference loop)
+    \item PR2: \texttt{edge/compliance\_engine/} (rules, IoU, debounce, handoff function)
+    \item Respond to A's review within 48h
+\end{itemize}
+No files outside \texttt{edge/}.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] mAP@0.5 $\geq$ 0.70 on held-out test set
+    \item[$\square$] EVAL.md complete
+    \item[$\square$] PRs merged to \texttt{main}
+    \item[$\square$] Member A confirms harness converts your dict $\rightarrow$ MQTT $\rightarrow$ DB
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Week 12:} Hand off model package. Answer harness failures quickly --- usually field name mismatch or wrong \texttt{event} enum string.
+\end{collabbox}
+
+%===============================================================================
+\chapter{Sprint 4 (Weeks 13--16): Deploy Support}
+%===============================================================================
+
+\section{Sprint goal}
+
+Fix Jetson-side issues reported by Member A; stable FPS and handoff on edge camera. \textbf{M3}.
+
+\begin{approachbox}
+You \textbf{do not SSH to Jetson} unless A asks you to watch. Your job: fix code from Jira bugs, re-export ONNX, tune confidence thresholds from A's feedback logs.
+\end{approachbox}
+
+\begin{stepbox}{Threshold tuning}
+If false positives on vest: raise confidence threshold in config YAML. If missed helmets: lower threshold or add hard-hat images similar to Jetson camera angle.
+\end{stepbox}
+
+\begin{stepbox}{FPS optimization hints for A's deploy}
+Document in README: use YOLOv8n only; 640 input; TensorRT export command; expected FPS range on Jetson Nano 2GB ($>$15 target).
+\end{stepbox}
+
+\begin{stepbox}{Presentation prep}
+5-minute CV slides: three-track diagram, sample detections, mAP table, handoff boundary diagram, demo video clip (laptop is fine).
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] Zero open \texttt{blocker} Jira tickets from Jetson testing
+    \item[$\square$] Helmet-off test works when A runs on Jetson
+    \item[$\square$] CV slides draft ready
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Week 16 integration:} Stand by on call. Explain IoU/debounce if supervisor asks. A operates hardware.
+\end{collabbox}
+
+%===============================================================================
+\chapter{Sprint 5 (Weeks 17--20): Documentation \& Viva}
+%===============================================================================
+
+\section{Sprint goal}
+
+FYP report CV chapters; viva-ready explanations; joint demo. \textbf{M4}.
+
+\begin{approachbox}
+Shift from coding to \textbf{explaining}. You must defend every design choice: why 6 classes, why IoU 0.3, why YOLOv8n, why debounce 60s.
+\end{approachbox}
+
+\begin{stepbox}{Report sections}
+\begin{itemize}
+    \item Dataset: sources, count, annotation examples
+    \item Training: hyperparameters, hardware, duration
+    \item Evaluation: EVAL.md tables + confusion matrix figure
+    \item Compliance engine: IoU diagram, debounce flowchart
+    \item Integration: handoff dict; boundary with Member A's MQTT (diagram)
+\end{itemize}
+Use LaTeX for report; Member A handles platform chapters.
+\end{stepbox}
+
+\begin{stepbox}{Viva preparation}
+Practice answers for:
+\begin{itemize}
+    \item Walk through one frame: detect $\rightarrow$ associate $\rightarrow$ rule $\rightarrow$ event
+    \item Why not detect goggles/forklift? (supervisor scope)
+    \item What happens after your dict leaves the edge? (high-level platform --- A's part)
+    \item Limitations: lighting, occlusion, class confusion
+\end{itemize}
+\end{stepbox}
+
+\begin{stepbox}{Demo role}
+Present CV slides (~2 min of 12 min demo). A runs live Jetson. rehearse Q\&A handoff between you two.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] Report CV sections submitted
+    \item[$\square$] Can explain every function in merged PRs
+    \item[$\square$] Joint demo rehearsed twice
+    \item[$\square$] All \texttt{member-b} Jira tickets closed
+\end{itemize}
+\end{verifybox}
+
+%===============================================================================
+\chapter{Appendix A: Handoff Dict Specification}
+%===============================================================================
+
+\begin{verbatim}
+{
+  "event": "helmet_missing | vest_missing | fire |
+            smoke | spill | compliant",
+  "zone": "welding_bay | general | chemical_storage",
+  "worker_id": 7,
+  "compliance_score": 78,
+  "confidence": 0.92,
+  "detections": [
+    {"class": "helmet", "bbox": [x,y,w,h], "confidence": 0.94}
+  ],
+  "image_path": "evidence/session_id/frame_001.jpg"
+}
+\end{verbatim}
+
+Member A adds: \texttt{type}, \texttt{priority}, \texttt{timestamp}, \texttt{session\_id}, MQTT publish.
+
+%===============================================================================
+\chapter{Appendix B: Dataset Targets by Sprint}
+%===============================================================================
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Sprint} & \textbf{Min images} & \textbf{Target mAP@0.5} \\
+\midrule
+1 & 200+ labeled & Pretrained demo only \\
+2 & 500+ & $\geq$ 0.60 val \\
+3 & 1000+ & $\geq$ 0.70 test \\
+4--5 & tune only & stable on Jetson \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%===============================================================================
+\chapter{Appendix C: Troubleshooting}
+%===============================================================================
+
+\begin{itemize}
+    \item \textbf{Low mAP on one class:} Add 50+ images for that class; check mislabels
+    \item \textbf{IoU assigns wrong PPE:} Lower/raise threshold; prefer closest worker centroid
+    \item \textbf{Debounce too aggressive:} Reduce window for demo; document production value
+    \item \textbf{A says harness fails:} Compare your JSON keys to contract line-by-line
+    \item \textbf{CUDA OOM:} Reduce batch size; use \texttt{yolov8n} not \texttt{s/m}
+\end{itemize}
+
+\end{document}

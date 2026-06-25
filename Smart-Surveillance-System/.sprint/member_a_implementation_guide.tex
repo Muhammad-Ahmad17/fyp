@@ -1,0 +1,469 @@
+%===============================================================================
+% Member A — Implementation Guide
+% Detailed sprint breakdown + how to approach each phase
+%===============================================================================
+\documentclass[12pt,a4paper]{report}
+\input{_preamble.tex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{primary}{Member A Implementation Guide}}
+\rfoot{Page \thepage}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\color{primary}\textbf{COMSATS University Islamabad (Lahore Campus)}}\\[0.3cm]
+{\large Department of Computer Engineering}\\[1cm]
+\rule{\textwidth}{2pt}\\[0.8cm]
+{\Huge\bfseries\color{primary} Implementation Guide}\\[0.4cm]
+{\Large Member A --- Platform, MQTT \& Deployment}\\[0.2cm]
+{\large Detailed Sprint Breakdown \& Approach}\\[0.3cm]
+\rule{\textwidth}{2pt}\\[1cm]
+{\small Companion: \texttt{member\_a\_sprint\_plan.tex} $\cdot$ Master: \texttt{centralized\_sprint\_plan.tex}}\\
+\vfill
+{\large Spring--Fall 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%===============================================================================
+\chapter{Introduction}
+%===============================================================================
+
+\section{Purpose}
+
+This guide tells you \textbf{how to implement} your track week by week --- not just \textit{what} to build. Use it alongside:
+
+\begin{itemize}
+    \item \texttt{.sprint/member\_a\_sprint\_plan.tex} --- task list
+    \item \texttt{.sprint/centralized\_sprint\_plan.tex} --- joint dates \& milestones
+    \item \texttt{.prerequisite/MEMBER\_A\_PREREQUISITES.md} --- skills before Sprint 1
+    \item \texttt{finalization/dinosaur\_fyp\_architecture\_92471e72.plan.md} --- full architecture
+\end{itemize}
+
+\section{Your boundary}
+
+You own everything from MQTT publish through to the dashboard. Member B stops at a Python handoff dict. \textbf{Never wait for Jetson until Sprint 4} --- the event simulator is your edge substitute in Sprints 1--3.
+
+\section{General workflow every week}
+
+\begin{enumerate}
+    \item \textbf{Monday:} Pick Jira tickets for the week from active sprint
+    \item \textbf{Daily:} Code on feature branch; push at least every 2 days
+    \item \textbf{Wednesday:} 30-min sync with Member B (blockers only)
+    \item \textbf{Friday:} Open/update PR; comment on Jira ticket
+    \item \textbf{Sunday:} Update \texttt{docs/sprint-logs/} weekly entry
+\end{enumerate}
+
+\begin{tipbox}
+Build \textbf{vertically thin slices} each sprint: make one event flow end-to-end before adding features. Example Sprint 2: one simulator alert $\rightarrow$ DB row $\rightarrow$ REST query --- before polish.
+\end{tipbox}
+
+%===============================================================================
+\chapter{Sprint 1 (Weeks 1--4): Foundation \& Transport}
+%===============================================================================
+
+\section{Sprint goal}
+
+Monorepo exists, contract drafted, Mosquitto + Redis + bridge + simulator running. Member B aligns handoff spec. \textbf{Milestone M0} at week 4.
+
+\begin{approachbox}
+\textbf{Order of work:}
+\begin{enumerate}
+    \item Dev environment + GitHub/Jira setup (Day 1--2)
+    \item Repo scaffold + \texttt{contracts/events.py} (Week 1)
+    \item Docker Compose with Mosquitto + Redis only (Week 2)
+    \item Bridge + simulator (Week 3)
+    \item Contract sign-off with B + integration session (Week 4)
+\end{enumerate}
+\textbf{Do not} start FastAPI services yet --- transport must work first.
+\end{approachbox}
+
+\subsection{Week 1--2: Scaffold \& contract}
+
+\begin{stepbox}{Initialize monorepo}
+Create top-level layout:
+\begin{verbatim}
+smart-surveillance/
+|-- contracts/events.py
+|-- transport/mqtt_redis_bridge/
+|-- transport/event_simulator/
+|-- edge/mqtt_publisher/        # you own; B never commits here
+|-- services/alert_service/
+|-- infra/docker-compose.yml
+|-- frontend/src/
+\end{verbatim}
+Open Jira project SSP; create Sprint 1; tickets: SSP-1 scaffold, SSP-2 contract, SSP-3 compose.
+\end{stepbox}
+
+\begin{stepbox}{Draft frozen contract}
+In \texttt{contracts/events.py} define Pydantic models:
+\begin{itemize}
+    \item \texttt{type}: alert | metrics | heartbeat
+    \item \texttt{event}: helmet\_missing, vest\_missing, fire, smoke, spill, compliant
+    \item Fields: timestamp, session\_id, worker\_id, zone, confidence, compliance\_score, detections[], image\_path
+\end{itemize}
+Share PDF/markdown mapping table with Member B: handoff dict field $\rightarrow$ contract field.
+\end{stepbox}
+
+\begin{stepbox}{Docker Compose skeleton}
+Start minimal \texttt{infra/docker-compose.yml}:
+\begin{itemize}
+    \item Network \texttt{ppe-network}
+    \item Services: \texttt{mosquitto}, \texttt{redis} (health checks)
+    \item Volumes for Redis persistence
+    \item \texttt{.env.example} with \texttt{MQTT\_HOST}, \texttt{REDIS\_URL}
+\end{itemize}
+Verify: \texttt{docker compose config} passes.
+\end{stepbox}
+
+\subsection{Week 3--4: Bridge \& simulator}
+
+\begin{stepbox}{MQTT-Redis bridge}
+Implement async Python service:
+\begin{enumerate}
+    \item Subscribe to \texttt{ppe/\#} on Mosquitto
+    \item Parse JSON; validate with \texttt{contracts.events}
+    \item Route: \texttt{ppe/alerts/*} $\rightarrow$ \texttt{XADD ppe:alerts}
+    \item Add metadata: \texttt{received\_at}, \texttt{device\_id}
+    \item On parse fail: \texttt{XADD ppe:dead\_letter}
+    \item Exponential backoff reconnect
+\end{enumerate}
+Test: \texttt{mosquitto\_pub} manually $\rightarrow$ \texttt{XRANGE ppe:alerts}.
+\end{stepbox}
+
+\begin{stepbox}{Event simulator}
+Publish realistic events at 45/hour:
+\begin{itemize}
+    \item All zones: welding\_bay, general, chemical\_storage
+    \item All priorities; include compliant + violation mix
+    \item Valid \texttt{image\_path} strings (no real files needed yet)
+\end{itemize}
+This replaces Jetson until Sprint 4.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] \texttt{docker compose up} starts mosquitto, redis, bridge, simulator
+    \item[$\square$] \texttt{XRANGE ppe:alerts - + COUNT 10} shows events
+    \item[$\square$] Bridge survives restart (Redis persistence)
+    \item[$\square$] Member B signed handoff mapping doc (M0)
+    \item[$\square$] First PR merged; Jira Sprint 1 tickets closed
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Week 4 integration:} Walk Member B through contract fields. Receive sample handoff JSON from B; write a one-off script that converts it to contract payload (preview for Sprint 4 publisher).
+\end{collabbox}
+
+\begin{pitfallbox}
+\begin{itemize}
+    \item Starting microservices before bridge works --- debug transport in isolation first
+    \item Changing contract after M0 without B's approval
+    \item Committing \texttt{.env} secrets to GitHub
+\end{itemize}
+\end{pitfallbox}
+
+%===============================================================================
+\chapter{Sprint 2 (Weeks 5--8): Backend Core}
+%===============================================================================
+
+\section{Sprint goal}
+
+PostgreSQL + MinIO live; Alert and Metrics services consume streams and expose REST. \textbf{Milestone M1} at week 8.
+
+\begin{approachbox}
+\textbf{Order of work:}
+\begin{enumerate}
+    \item Database schema + migrations (Week 5)
+    \item Alert Service consumer only --- log to console (Week 5)
+    \item Alert Service DB write + dedup (Week 6)
+    \item Metrics Service + hypertable (Week 7)
+    \item REST endpoints + integration test (Week 8)
+\end{enumerate}
+Keep simulator running entire sprint.
+\end{approachbox}
+
+\subsection{Week 5--6: Database \& Alert Service}
+
+\begin{stepbox}{PostgreSQL schema}
+Add to Compose: PostgreSQL + TimescaleDB image.
+\begin{verbatim}
+violations (id, timestamp, worker_id, zone,
+  event_type, priority, confidence, image_path,
+  agent_briefing, acknowledged)
+
+compliance_metrics (time, zone, shift, score,
+  worker_count, violation_count)  -- hypertable
+
+zone_rules (zone, requires_helmet, requires_vest)
+\end{verbatim}
+Run migrations; seed \texttt{zone\_rules} for 3 zones.
+\end{stepbox}
+
+\begin{stepbox}{MinIO}
+Add MinIO service; create \texttt{evidence/} bucket. Alert service will store/fetch paths --- upload test JPEG manually to verify presigned URLs.
+\end{stepbox}
+
+\begin{stepbox}{Alert Service (:8001)}
+\begin{enumerate}
+    \item Consumer group \texttt{alert-svc} on \texttt{ppe:alerts}
+    \item Dedup: Redis key \texttt{dedup:\{worker\}:\{event\}:\{zone\}} TTL 60s
+    \item INSERT into \texttt{violations}; \texttt{XACK} after success
+    \item CRITICAL priority: skip rate limit
+    \item Publish to Redis pub/sub channel \texttt{live:alerts} for Sprint 3 WebSocket
+    \item \texttt{GET /api/alerts} with filters
+\end{enumerate}
+\end{stepbox}
+
+\subsection{Week 7--8: Metrics Service}
+
+\begin{stepbox}{Metrics Service (:8002)}
+\begin{enumerate}
+    \item Consumer \texttt{metrics-svc} on \texttt{ppe:metrics}
+    \item Write to \texttt{compliance\_metrics} hypertable
+    \item Rolling hourly/daily aggregates per zone
+    \item Zone risk score: weighted violations $\times$ severity
+    \item Endpoints: \texttt{/api/metrics/compliance}, \texttt{/trend}, \texttt{/zone-risk}
+\end{enumerate}
+\end{stepbox}
+
+\begin{stepbox}{Integration test}
+Pytest with docker-compose:
+\begin{enumerate}
+    \item Start stack + simulator
+    \item Wait 30s; assert \texttt{violations} count $>$ 0
+    \item \texttt{GET /api/alerts} returns 200
+    \item \texttt{GET /api/metrics/compliance} returns data
+\end{enumerate}
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] M1: simulator $\rightarrow$ Redis $\rightarrow$ Alert $\rightarrow$ PostgreSQL
+    \item[$\square$] REST returns filtered alerts
+    \item[$\square$] Metrics hypertable has rows
+    \item[$\square$] Ingested B's sample handoff JSON via test script (optional)
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Week 8:} Integration session. Demo REST API to Member B. Collect any handoff JSON samples for Sprint 3 harness.
+\end{collabbox}
+
+%===============================================================================
+\chapter{Sprint 3 (Weeks 9--12): Real-Time, Reports, Synthetic, Agent}
+%===============================================================================
+
+\section{Sprint goal}
+
+WebSocket live; 90-day synthetic seed; PDF reports; agent skeleton with 3 tools. \textbf{M2} at week 12.
+
+\begin{approachbox}
+\textbf{Parallel tracks within sprint:}
+\begin{itemize}
+    \item \textbf{Track A:} WebSocket + Reporting (Week 9--10) --- demo value fast
+    \item \textbf{Track B:} Synthetic data (Week 9--10) --- unblocks dashboard/agent testing
+    \item \textbf{Track C:} Agent skeleton (Week 11--12) --- after DB has synthetic history
+\end{itemize}
+Review Member B's merged PRs in \texttt{edge/} but do not write CV code.
+\end{approachbox}
+
+\subsection{Week 9--10: WebSocket \& Reporting}
+
+\begin{stepbox}{WebSocket Gateway (:8004)}
+\begin{enumerate}
+    \item Subscribe Redis \texttt{live:alerts} and metrics channels
+    \item FastAPI \texttt{/ws/live}; connection manager (add/remove clients)
+    \item Broadcast JSON on each alert
+    \item Test with \texttt{websocat} or browser DevTools
+\end{enumerate}
+\end{stepbox}
+
+\begin{stepbox}{Reporting Service (:8003)}
+ReportLab PDF: header, date range, compliance summary, violation table, recommendations paragraph. \texttt{POST /api/reports/generate}. Scheduled cron optional stub.
+\end{stepbox}
+
+\begin{stepbox}{Synthetic data engine}
+\texttt{synthetic/scenarios/90day\_baseline.yaml}: 15 workers, 3 zones, patterns (night drop, welding bay chronic violations). Run \texttt{python synthetic/generate.py} --- bulk INSERT + optional stream replay. Dashboard and agent now have history.
+\end{stepbox}
+
+\subsection{Week 11--12: Agent skeleton}
+
+\begin{stepbox}{Agent Service (:8005)}
+\begin{enumerate}
+    \item LangGraph: planner $\rightarrow$ tool executor $\rightarrow$ responder
+    \item Tools calling your DB: \texttt{query\_violations}, \texttt{get\_compliance\_trend}, \texttt{get\_zone\_risk\_score}
+    \item \texttt{POST /api/agent/query} with OpenAI GPT-4o; Ollama fallback env flag
+    \item OpenAPI on all 5 services
+\end{enumerate}
+\end{stepbox}
+
+\begin{stepbox}{Handoff test harness}
+Script: read B's handoff JSON file $\rightarrow$ your publisher function $\rightarrow$ MQTT $\rightarrow$ verify row in DB. No Jetson required.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] WebSocket client receives event within 2s of simulator publish
+    \item[$\square$] PDF downloads with synthetic data charts
+    \item[$\square$] Agent answers: ``How many violations in welding bay last 24h?''
+    \item[$\square$] B's edge PRs merged; harness passes with B's sample dict
+\end{itemize}
+\end{verifybox}
+
+%===============================================================================
+\chapter{Sprint 4 (Weeks 13--16): Dashboard \& Jetson}
+%===============================================================================
+
+\section{Sprint goal}
+
+Full React UI; MQTT publisher on Jetson wrapping B's code; agent RAG + reactive mode. \textbf{M3} at week 16.
+
+\begin{approachbox}
+\textbf{Order of work:}
+\begin{enumerate}
+    \item React shell + WebSocket + Dashboard page (Week 13) --- use synthetic data immediately
+    \item Remaining pages (Week 14)
+    \item \texttt{edge/mqtt\_publisher/} adapter for B's handoff (Week 15)
+    \item Jetson flash + deploy + disable simulator (Week 15--16)
+    \item Agent RAG + reactive CRITICAL briefings (Week 16)
+\end{enumerate}
+\end{approachbox}
+
+\subsection{Week 13--14: React dashboard}
+
+\begin{stepbox}{Frontend scaffold}
+Vite + React + TypeScript + Zustand + Tailwind. WebSocket hook updates store. Pages:
+\begin{itemize}
+    \item Dashboard: compliance gauge, mini alert feed
+    \item Alerts: full feed, filters, evidence modal
+    \item Analytics: trend chart, zone heatmap, pie chart
+    \item Agent: chat panel
+    \item Reports: date picker $\rightarrow$ PDF
+    \item Config: helmet/vest toggles per zone
+\end{itemize}
+\end{stepbox}
+
+\subsection{Week 15--16: Jetson integration}
+
+\begin{stepbox}{MQTT publisher on edge}
+\texttt{edge/mqtt\_publisher/publisher.py}:
+\begin{enumerate}
+    \item Import B's \texttt{get\_compliance\_event(frame)} from compliance engine
+    \item Map dict $\rightarrow$ \texttt{contracts.events.AlertPayload}
+    \item Add timestamp, session\_id, priority, type
+    \item paho-mqtt publish to broker (broker IP = your laptop/server on network)
+\end{enumerate}
+\end{stepbox}
+
+\begin{stepbox}{Jetson deploy}
+\begin{enumerate}
+    \item Flash JetPack; SSH; install deps from B's \texttt{requirements.txt}
+    \item Copy B's weights/ONNX; verify inference FPS
+    \item Run publisher + inference loop as systemd service
+    \item Point Jetson MQTT at Compose Mosquitto IP
+    \item Verify end-to-end; stop simulator
+\end{enumerate}
+\end{stepbox}
+
+\begin{stepbox}{Agent completion}
+pgvector embeddings on violations; reactive trigger on CRITICAL stream event; write \texttt{agent\_briefing} to DB; push via WebSocket.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] M3: remove helmet on camera $\rightarrow$ gauge drops $\rightarrow$ alert on UI
+    \item[$\square$] Agent briefing appears on CRITICAL alert
+    \item[$\square$] All 6 pages functional
+\end{itemize}
+\end{verifybox}
+
+\begin{collabbox}
+\textbf{Weeks 15--16:} B available for threshold tuning questions. You operate Jetson during integration session.
+\end{collabbox}
+
+%===============================================================================
+\chapter{Sprint 5 (Weeks 17--20): DevOps \& Demo}
+%===============================================================================
+
+\section{Sprint goal}
+
+One-command stack; CI/CD; Grafana; 12-minute demo rehearsed. \textbf{M4} at week 20.
+
+\begin{approachbox}
+Do DevOps \textbf{after} features work --- don't block Sprint 4 UI on Grafana. Week 17--18: Compose hardening + CI. Week 19--20: demo script + report.
+\end{approachbox}
+
+\begin{stepbox}{Full docker-compose}
+All services with \texttt{depends\_on} health conditions. Nginx serves React build. Document \texttt{README.md} quick start.
+\end{stepbox}
+
+\begin{stepbox}{GitHub Actions}
+Lint (ruff, eslint) $\rightarrow$ pytest $\rightarrow$ compose integration job $\rightarrow$ build images.
+\end{stepbox}
+
+\begin{stepbox}{Observability}
+Prometheus scrape all \texttt{/metrics}. Grafana dashboards: System Health + Safety KPIs. Show both during demo.
+\end{stepbox}
+
+\begin{stepbox}{12-minute demo script}
+\begin{enumerate}
+    \item \texttt{docker compose up} (1 min)
+    \item Grafana health (1 min)
+    \item Live violation + agent briefing (2 min)
+    \item Agent chat question (2 min)
+    \item Analytics 90-day view (2 min)
+    \item PDF report (1 min)
+    \item Zone config change (1 min)
+    \item Q\&A architecture (2 min)
+\end{enumerate}
+Rehearse twice; record screen backup.
+\end{stepbox}
+
+\begin{verifybox}
+\begin{itemize}
+    \item[$\square$] M4: demo run without manual fixes
+    \item[$\square$] CI green on \texttt{main}
+    \item[$\square$] Platform report chapters drafted
+    \item[$\square$] Tag \texttt{v1.0-demo}
+\end{itemize}
+\end{verifybox}
+
+%===============================================================================
+\chapter{Appendix A: Service Ports}
+%===============================================================================
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Port} & \textbf{Service} \\
+\midrule
+1883 & Mosquitto \\
+6379 & Redis \\
+5432 & PostgreSQL \\
+9000 & MinIO \\
+8001--8005 & FastAPI services \\
+3000 & React (Nginx) \\
+9090 / 3001 & Prometheus / Grafana \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%===============================================================================
+\chapter{Appendix B: Troubleshooting}
+%===============================================================================
+
+\begin{itemize}
+    \item \textbf{No stream messages:} Check bridge logs; \texttt{XRANGE}; Mosquitto ACL
+    \item \textbf{Consumer lag:} \texttt{XPENDING ppe:alerts alert-svc}; claim stale messages
+    \item \textbf{WebSocket silent:} Verify Redis pub/sub from Alert Service
+    \item \textbf{Jetson cannot reach broker:} Same LAN IP; firewall port 1883
+    \item \textbf{Agent empty answers:} Check synthetic seed; OpenAI key; tool SQL
+\end{itemize}
+
+\end{document}

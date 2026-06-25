@@ -1,0 +1,340 @@
+%===============================================================================
+% Centralized Sprint Plan — Industrial Safety Intelligence Platform
+% 5 Months | 5 Sprints | 20 Weeks — AUTHORITATIVE TIMELINE
+%===============================================================================
+\documentclass[12pt,a4paper]{article}
+\input{_preamble.tex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{primary}{Industrial Safety Intelligence Platform}}
+\rhead{\textcolor{primary}{Centralized Sprint Plan}}
+\rfoot{Page \thepage}
+
+%===============================================================================
+\begin{document}
+%===============================================================================
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\color{primary}\textbf{COMSATS University Islamabad (Lahore Campus)}}\\[0.2cm]
+{\large Department of Computer Engineering}\\[0.5cm]
+\rule{\textwidth}{2pt}\\[0.8cm]
+{\Huge\bfseries\color{primary} Centralized Sprint Plan}\\[0.4cm]
+{\Large Industrial Safety Intelligence Platform}\\[0.2cm]
+{\large 5 Months $\cdot$ 5 Sprints $\cdot$ 20 Weeks}\\[0.2cm]
+{\large Master Timeline --- Both Members}\\[0.3cm]
+\rule{\textwidth}{2pt}\\[1cm]
+\begin{tabular}{rl}
+\textbf{Duration:} & 5 months (20 weeks) \\
+\textbf{Sprint length:} & 4 weeks each \\
+\textbf{Version:} & 3.0 (compressed from 8-month plan) \\
+\textbf{Member A plan:} & \texttt{member\_a\_sprint\_plan.tex} \\
+\textbf{Member B plan:} & \texttt{member\_b\_sprint\_plan.tex} \\
+\end{tabular}
+\vfill
+{\large Spring--Fall 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%===============================================================================
+\section{How to Use This Document}
+%===============================================================================
+
+\begin{itemize}
+    \item \textbf{This file} is the single source of truth for \textbf{sprint dates, milestones, and joint sessions}.
+    \item \textbf{Member A} follows \texttt{member\_a\_sprint\_plan.tex} for platform, MQTT, deploy, and DevOps tasks only.
+    \item \textbf{Member B} follows \texttt{member\_b\_sprint\_plan.tex} for CV development tasks only.
+    \item When dates or milestones change, update \textbf{this file first}, then sync member files.
+    \item Track tickets in \textbf{Jira} (see \texttt{README.md} in this folder); link each ticket to GitHub PRs.
+\end{itemize}
+
+%===============================================================================
+\section{Team Roles (Summary)}
+%===============================================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\rowcolor{primary!20}
+\textbf{Member} & \textbf{Owns} \\
+\midrule
+\textbf{A} & Full MQTT pipeline, Jetson deploy, 5 microservices, agent, dashboard, synthetic data, DevOps \\
+\textbf{B} & YOLO inference, compliance engine, evidence capture, CV handoff dict --- \textbf{no MQTT} \\
+\textbf{Joint} & Frozen contract, handoff interface, integration sessions, final demo \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Detection classes (supervisor-approved): worker, helmet, vest, fire, smoke, spill. See \texttt{DETECTION\_CLASS\_SCOPE.md}.
+
+%===============================================================================
+\section{5-Month Timeline (Gantt)}
+%===============================================================================
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{ganttchart}[
+    hgrid, vgrid,
+    x unit=0.42cm, y unit chart=0.5cm, y unit title=0.6cm,
+    bar/.append style={fill=primary!70},
+    group/.append style={fill=accent!70},
+    milestone/.append style={fill=danger},
+    title label font=\tiny\bfseries,
+    bar label font=\tiny, group label font=\tiny\bfseries
+]{1}{20}
+\gantttitle{5-Month Plan (20 Weeks)}{20} \\
+\gantttitlelist{1,...,20}{1} \\
+
+\ganttgroup{Sprint 1: Foundation \& Transport}{1}{4} \\
+\ganttbar{Member A: Repo, MQTT, Redis, contract}{1}{4} \\
+\ganttbar{Member B: Dataset, annotation, handoff draft}{1}{4} \\
+\ganttmilestone{M0: Contract frozen}{4} \\
+
+\ganttgroup{Sprint 2: Backend Core \& CV Training}{5}{8} \\
+\ganttbar{Member A: DB, Alert, Metrics, bridge}{5}{8} \\
+\ganttbar{Member B: YOLO train, IoU, compliance}{5}{8} \\
+\ganttmilestone{M1: Events in Redis}{8} \\
+
+\ganttgroup{Sprint 3: Services, Agent Start, CV Complete}{9}{12} \\
+\ganttbar{Member A: WebSocket, Reports, Synthetic, Agent}{9}{12} \\
+\ganttbar{Member B: Model export, compliance final}{9}{12} \\
+\ganttmilestone{M2: Backend + synthetic live}{12} \\
+
+\ganttgroup{Sprint 4: Dashboard \& Jetson Integration}{13}{16} \\
+\ganttbar{Member A: React UI, Agent complete, Jetson deploy}{13}{16} \\
+\ganttbar{Member B: CV PR merge, deploy support}{13}{16} \\
+\ganttmilestone{M3: Live dashboard + Jetson CV}{16} \\
+
+\ganttgroup{Sprint 5: DevOps, Demo \& Submission}{17}{20} \\
+\ganttbar{Member A: CI/CD, Grafana, demo stack}{17}{20} \\
+\ganttbar{Member B: Jetson CV fixes, CV docs}{17}{20} \\
+\ganttmilestone{M4: Final demo \& FYP ready}{20}
+\end{ganttchart}
+}
+\end{center}
+
+%===============================================================================
+\section{Sprint 1 (Weeks 1--4): Foundation \& Transport}
+%===============================================================================
+
+\begin{sprintbox}{Sprint 1 --- Lock the contract; start both tracks}
+
+\subsection*{Sprint goal}
+Monorepo live, frozen event contract signed, MQTT$\rightarrow$Redis path working with simulator; Member B starts dataset and handoff spec.
+
+\subsection*{Member A deliverables}
+\begin{itemize}
+    \item Repo scaffold, \texttt{docker-compose.yml} skeleton, dev environment
+    \item \texttt{contracts/events.py} drafted; Mosquitto + Redis in Compose
+    \item MQTT-Redis bridge + event simulator publishing valid events
+\end{itemize}
+
+\subsection*{Member B deliverables}
+\begin{itemize}
+    \item Dev environment, GPU verified, annotation tool ready
+    \item \texttt{edge/inference/README.md} with 6 supervisor classes
+    \item Draft CV handoff interface (Python dict schema) for Member A
+\end{itemize}
+
+\begin{collabbox}
+\textbf{Week 4 --- Integration session \#1}
+\begin{itemize}
+    \item Both sign off on \texttt{contracts/events.py} and handoff interface (\textbf{M0})
+    \item Member B provides sample handoff JSON; Member A validates against contract
+    \item Sprint review: simulator events visible in Redis
+\end{itemize}
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 2 (Weeks 5--8): Backend Core \& CV Training}
+%===============================================================================
+
+\begin{sprintbox}{Sprint 2 --- Data layer + first microservices + YOLO training}
+
+\subsection*{Sprint goal}
+Alert and Metrics services consuming Redis Streams; PostgreSQL + MinIO live; Member B training YOLO on 6 classes.
+
+\subsection*{Member A deliverables}
+\begin{itemize}
+    \item PostgreSQL + TimescaleDB schema, MinIO evidence bucket
+    \item Alert Service (:8001), Metrics Service (:8002)
+    \item \texttt{GET /api/alerts}, \texttt{GET /api/metrics/compliance}
+\end{itemize}
+
+\subsection*{Member B deliverables}
+\begin{itemize}
+    \item 500+ annotated images (minimum); YOLOv8n training in progress
+    \item IoU association + compliance engine prototype
+    \item Evidence frame save returning \texttt{image\_path}
+\end{itemize}
+
+\begin{collabbox}
+\textbf{Week 8 --- Integration session \#2} (\textbf{M1})
+\begin{itemize}
+    \item Simulator (or stub handoff) events persist in \texttt{violations} table
+    \item Member B demo: inference + handoff dict on laptop (no MQTT)
+    \item Carry-over list for Sprint 3 documented in Jira
+\end{itemize}
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 3 (Weeks 9--12): Platform Services \& CV Completion}
+%===============================================================================
+
+\begin{sprintbox}{{Sprint 3 --- Real-time layer; reports; synthetic data; agent start}}
+
+\subsection*{Sprint goal}
+WebSocket live; 90-day synthetic seed; reporting PDF; agent graph started; Member B model export ready.
+
+\subsection*{Member A deliverables}
+\begin{itemize}
+    \item WebSocket Gateway (:8004), Reporting Service (:8003)
+    \item Synthetic data engine --- \texttt{90day\_baseline} seed
+    \item Agent Service (:8005) --- LangGraph skeleton + 3 tools
+\end{itemize}
+
+\subsection*{Member B deliverables}
+\begin{itemize}
+    \item Trained model mAP@0.5 $\geq$ 0.70 on test set
+    \item ONNX export + compliance engine complete
+    \item Merged PRs to \texttt{edge/inference/}, \texttt{edge/compliance\_engine/}
+\end{itemize}
+
+\begin{collabbox}
+\textbf{Week 12 --- Integration session \#3} (\textbf{M2})
+\begin{itemize}
+    \item Dashboard can query synthetic history via REST
+    \item Member B handoff dict consumed by Member A's test harness (still no B-side MQTT)
+    \item Agent responds to one test query
+\end{itemize}
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 4 (Weeks 13--16): Dashboard \& Jetson Integration}
+%===============================================================================
+
+\begin{sprintbox}{Sprint 4 --- Full UI + deploy CV on Jetson + agent modes}
+
+\subsection*{Sprint goal}
+React dashboard with WebSocket; agent reactive + chat modes; Member A deploys B's CV + MQTT publisher on Jetson.
+
+\subsection*{Member A deliverables}
+\begin{itemize}
+    \item React dashboard: gauge, alerts, analytics, agent chat, zone config, reports
+    \item MQTT publisher wrapping B's handoff; Jetson flash + deploy
+    \item Agent: RAG + proactive mode; full REST surface
+\end{itemize}
+
+\subsection*{Member B deliverables}
+\begin{itemize}
+    \item Final CV fixes from Member A's deploy feedback
+    \item \texttt{edge/README.md} + model weights delivery package
+    \item Support integration sessions (explain code, tune thresholds)
+\end{itemize}
+
+\begin{collabbox}
+\textbf{Week 16 --- Integration session \#4} (\textbf{M3})
+\begin{itemize}
+    \item End-to-end: Jetson CV $\rightarrow$ MQTT $\rightarrow$ dashboard gauge updates
+    \item Helmet-off demo triggers alert + optional agent briefing
+    \item Both attend; blockers resolved before Sprint 5
+\end{itemize}
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 5 (Weeks 17--20): DevOps, Demo \& Submission}
+%===============================================================================
+
+\begin{sprintbox}{{Sprint 5 --- Production polish; demo rehearsal; FYP submission}}
+
+\subsection*{Sprint goal}
+One-command \texttt{docker compose up}; CI/CD green; Grafana dashboards; 12-minute demo rehearsed; documentation complete.
+
+\subsection*{Member A deliverables}
+\begin{itemize}
+    \item Full Compose stack, GitHub Actions CI/CD
+    \item Prometheus + Grafana (System Health + Safety KPIs)
+    \item Disable simulator; live Jetson pipeline for demo
+\end{itemize}
+
+\subsection*{Member B deliverables}
+\begin{itemize}
+    \item CV section of report + viva prep (model, IoU, compliance, handoff)
+    \item Final model benchmark on Jetson (FPS, accuracy note)
+    \item Review joint presentation slides
+\end{itemize}
+
+\begin{collabbox}
+\textbf{Week 20 --- Final demo \& submission} (\textbf{M4})
+\begin{itemize}
+    \item 12-minute demo script rehearsed twice
+    \item All Jira tickets for Sprint 5 closed or deferred with supervisor note
+    \item FYP report, slides, and code tag \texttt{v1.0-demo}
+\end{itemize}
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Milestones}
+%===============================================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{clX}
+\toprule
+\rowcolor{primary!20}
+\textbf{ID} & \textbf{Week} & \textbf{Criteria (both must verify)} \\
+\midrule
+M0 & 4 & Contract + handoff interface signed \\
+M1 & 8 & MQTT pipeline $\rightarrow$ Redis $\rightarrow$ DB writes \\
+M2 & 12 & Synthetic data + WebSocket + B's model PR merged \\
+M3 & 16 & Jetson live $\rightarrow$ dashboard real-time \\
+M4 & 20 & Full demo + submission ready \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+%===============================================================================
+\section{Standing Collaboration Calendar}
+%===============================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\rowcolor{primary!20}
+\textbf{Event} & \textbf{When} & \textbf{Who} \\
+\midrule
+Sprint planning & Week 1 of each sprint & Both \\
+Weekly sync & Once per week & Both \\
+Sprint review & Week 4 of each sprint & Both \\
+Integration session & Weeks 4, 8, 12, 16, 20 & Both \\
+Sprint log due & Every Sunday 11:59 PM & Each member \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%===============================================================================
+\section{Risk Mitigation (5-Month Compression)}
+%===============================================================================
+
+\begin{itemize}
+    \item \textbf{Parallel work:} B trains CV while A builds platform --- do not wait for Jetson until Sprint 4.
+    \item \textbf{Simulator:} Member A's event simulator unblocks all backend sprints without B hardware.
+    \item \textbf{Scope freeze:} 6 detection classes only; no goggles/forklift.
+    \item \textbf{Slip buffer:} Optional gloves/boots dropped if Sprint 3 training behind schedule.
+    \item \textbf{Integration weeks:} Non-negotiable --- missing two in a row triggers supervisor escalation.
+\end{itemize}
+
+\end{document}

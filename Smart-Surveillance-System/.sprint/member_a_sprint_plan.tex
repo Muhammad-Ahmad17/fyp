@@ -1,0 +1,249 @@
+%===============================================================================
+% Member A Sprint Plan — Platform, MQTT, Deploy & DevOps
+% 5 Months | Reference: centralized_sprint_plan.tex for joint dates
+%===============================================================================
+\documentclass[12pt,a4paper]{article}
+\input{_preamble.tex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{primary}{Member A --- Platform Track}}
+\rhead{\textcolor{primary}{Sprint Plan}}
+\rfoot{Page \thepage}
+
+%===============================================================================
+\begin{document}
+%===============================================================================
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\color{primary}\textbf{COMSATS University Islamabad (Lahore Campus)}}\\[0.2cm]
+{\large Department of Computer Engineering}\\[0.5cm]
+\rule{\textwidth}{2pt}\\[0.8cm]
+{\Huge\bfseries\color{primary} Member A Sprint Plan}\\[0.4cm]
+{\Large Platform, MQTT \& Edge Deployment Lead}\\[0.2cm]
+{\large 5 Months $\cdot$ 5 Sprints --- Your Tasks Only}\\[0.3cm]
+\rule{\textwidth}{2pt}\\[1cm]
+{\small Master timeline: \texttt{.sprint/centralized\_sprint\_plan.tex}}\\
+\vfill
+{\large Spring--Fall 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%===============================================================================
+\section{Your Role}
+%===============================================================================
+
+\begin{scopebox}
+\textbf{You own:} Full MQTT pipeline (publisher $\rightarrow$ broker $\rightarrow$ bridge $\rightarrow$ consumers), Jetson deploy, 5 FastAPI services, PostgreSQL/MinIO/Redis, LangGraph agent, synthetic data, React dashboard, Docker/CI/CD/Grafana, event simulator.
+\end{scopebox}
+
+\begin{outofscopebox}
+\textbf{Member B owns (do not implement):} YOLO training, compliance algorithms, TensorRT model creation, annotation. You \textbf{deploy} B's merged PRs and wrap output in your MQTT publisher.
+\end{outofscopebox}
+
+%===============================================================================
+\section{Sprint 1 (Weeks 1--4): Foundation \& Transport}
+%===============================================================================
+
+\begin{sprintbox}{{Your focus --- Repo; contract; MQTT; Redis}}
+
+\begin{taskbox}
+\textbf{Week 1--2}
+\begin{itemize}
+    \item Initialize \texttt{smart-surveillance/} monorepo; directory structure per architecture plan
+    \item \texttt{infra/docker-compose.yml} skeleton; \texttt{.env.example}
+    \item Draft \texttt{contracts/events.py} (Pydantic); share with Member B
+    \item Dev environment: Python 3.11+, Node 20+, Docker Compose v2
+    \item GitHub: branch rules, first PR, Jira board linked; create \texttt{sprint-1} tickets
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 3--4}
+\begin{itemize}
+    \item Mosquitto (:1883) + Redis (:6379) in Compose
+    \item \texttt{transport/mqtt\_redis\_bridge/} --- subscribe \texttt{ppe/\#}, XADD to streams
+    \item \texttt{transport/event\_simulator/} --- contract-valid test events
+    \item Streams: \texttt{ppe:alerts}, \texttt{ppe:metrics}, \texttt{ppe:heartbeat}
+    \item Document MQTT topic map in \texttt{contracts/README.md}
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 1 done when:}
+\begin{itemize}
+    \item \texttt{docker compose up} starts Mosquitto + Redis + bridge + simulator
+    \item Events visible via \texttt{XRANGE ppe:alerts - + COUNT 5}
+    \item Prerequisites checklist signed (\texttt{.prerequisite/MEMBER\_A\_PREREQUISITES.md})
+\end{itemize}
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 4 with Member B:} Sign frozen contract (\textbf{M0}). Review B's handoff dict draft; confirm your publisher can serialize it.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 2 (Weeks 5--8): Backend Core}
+%===============================================================================
+
+\begin{sprintbox}{Your focus --- Database + Alert + Metrics services}
+
+\begin{taskbox}
+\textbf{Week 5--6}
+\begin{itemize}
+    \item PostgreSQL + TimescaleDB; schema: \texttt{violations}, \texttt{compliance\_metrics}, \texttt{zone\_rules}
+    \item MinIO \texttt{evidence/} bucket
+    \item Alert Service (:8001): consumer group \texttt{alert-svc}, dedup TTL, DB writer
+    \item \texttt{GET /api/alerts?zone=\&priority=\&from=\&to=}
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 7--8}
+\begin{itemize}
+    \item Metrics Service (:8002): hypertable writer, rolling aggregator, zone risk scorer
+    \item \texttt{GET /api/metrics/compliance}, \texttt{/api/metrics/trend}, \texttt{/api/metrics/zone-risk}
+    \item Redis pub/sub broadcast after alert processing (prep for WebSocket)
+    \item Integration tests: simulator $\rightarrow$ DB row appears
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 2 done when:} \textbf{M1} --- violations and metrics queryable via REST from simulator events.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 8:} Integration session. Optionally ingest B's sample handoff JSON via test script (publish to MQTT yourself).
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 3 (Weeks 9--12): Services, Synthetic Data \& Agent Start}
+%===============================================================================
+
+\begin{sprintbox}{{Your focus --- WebSocket; Reports; Synthetic; Agent skeleton}}
+
+\begin{taskbox}
+\textbf{Week 9--10}
+\begin{itemize}
+    \item WebSocket Gateway (:8004): \texttt{/ws/live}, connection manager
+    \item Reporting Service (:8003): ReportLab PDF, \texttt{POST /api/reports/generate}
+    \item Synthetic engine: \texttt{synthetic/scenarios/90day\_baseline.yaml}, run seed script
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 11--12}
+\begin{itemize}
+    \item Agent Service (:8005): LangGraph planner + executor skeleton
+    \item Tools: \texttt{query\_violations}, \texttt{get\_compliance\_trend}, \texttt{get\_zone\_risk\_score}
+    \item \texttt{POST /api/agent/query} (basic chat)
+    \item OpenAPI docs on all services
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 3 done when:} \textbf{M2} --- synthetic 90-day data in DB; WebSocket pushes simulator alerts; B's PR merged (you review, not write CV).
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 12:} Test harness reads B's handoff dict $\rightarrow$ your publisher $\rightarrow$ full stack. No changes to B's \texttt{edge/} code without B's PR.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 4 (Weeks 13--16): Dashboard \& Jetson}
+%===============================================================================
+
+\begin{sprintbox}{{Your focus --- React UI; MQTT on Jetson; Agent complete}}
+
+\begin{taskbox}
+\textbf{Week 13--14}
+\begin{itemize}
+    \item React + Vite + Zustand; WebSocket client
+    \item Pages: Dashboard, Alerts, Analytics, Agent chat, Reports, Zone config
+    \item Compliance gauge, alert feed, charts (Chart.js)
+    \item Zone config: \texttt{requires\_helmet}, \texttt{requires\_vest} toggles
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 15--16}
+\begin{itemize}
+    \item \texttt{edge/mqtt\_publisher/} --- wraps B's compliance output, publishes to Mosquitto
+    \item Flash Jetson; deploy B's \texttt{edge/} + your publisher
+    \item Agent: RAG (pgvector), reactive mode on CRITICAL, proactive cron
+    \item Disable simulator when Jetson pipeline verified
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 4 done when:} \textbf{M3} --- live helmet-off demo on Jetson updates dashboard in real time.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Weeks 15--16:} Member B on standby to explain CV thresholds. You own all Jetson SSH, broker IP, and restart during demo.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 5 (Weeks 17--20): DevOps \& Demo}
+%===============================================================================
+
+\begin{sprintbox}{{Your focus --- Full stack; CI/CD; Grafana; demo}}
+
+\begin{taskbox}
+\textbf{Week 17--18}
+\begin{itemize}
+    \item Complete \texttt{docker-compose.yml} --- all 12+ services, health checks
+    \item GitHub Actions: lint $\rightarrow$ pytest $\rightarrow$ docker integration $\rightarrow$ build
+    \item Prometheus \texttt{/metrics} on every FastAPI service
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 19--20}
+\begin{itemize}
+    \item Grafana: System Health + Safety KPIs dashboards
+    \item Rehearse 12-minute demo (see centralized plan)
+    \item Platform chapters of FYP report; API documentation
+    \item Tag release \texttt{v1.0-demo}
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 5 done when:} \textbf{M4} --- \texttt{docker compose up} demo flawless; CI green on \texttt{main}.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 20:} Joint final demo with Member B. You operate stack + Jetson; B explains CV if supervisor asks.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Your Master Checklist}
+%===============================================================================
+
+\begin{itemize}
+    \item[$\square$] MQTT publisher, broker, bridge, stream consumers
+    \item[$\square$] Event simulator (Sprints 1--3)
+    \item[$\square$] Alert, Metrics, Reporting, WebSocket, Agent services
+    \item[$\square$] PostgreSQL + TimescaleDB + MinIO
+    \item[$\square$] Synthetic 90-day seed
+    \item[$\square$] React dashboard (6 pages)
+    \item[$\square$] Jetson flash, deploy, demo operation
+    \item[$\square$] Docker Compose + CI/CD + Grafana
+    \item[$\square$] Weekly sprint logs + Jira tickets closed per sprint
+\end{itemize}
+
+\end{document}

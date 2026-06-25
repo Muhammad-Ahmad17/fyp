@@ -1,0 +1,97 @@
+% Shared preamble for .sprint documents
+\usepackage[margin=0.9in]{geometry}
+\usepackage{tikz}
+\usepackage{pgfgantt}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{colortbl}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{tcolorbox}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{amssymb}
+
+\setlength{\headheight}{15pt}
+\addtolength{\topmargin}{-3pt}
+
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+\tcbuselibrary{skins,breakable}
+
+\definecolor{primary}{RGB}{0,82,147}
+\definecolor{secondary}{RGB}{52,152,219}
+\definecolor{accent}{RGB}{39,174,96}
+\definecolor{highlight}{RGB}{230,126,34}
+\definecolor{danger}{RGB}{231,76,60}
+\definecolor{light}{RGB}{236,240,241}
+\definecolor{memberb}{RGB}{142,68,173}
+
+\titleformat{\section}{\Large\bfseries\color{primary}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{secondary}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{accent}}{\thesubsubsection}{1em}{}
+
+\hypersetup{colorlinks=true,linkcolor=primary,urlcolor=secondary}
+
+\newtcolorbox{sprintbox}[1]{
+    colback=primary!5, colframe=primary,
+    title=#1, fonttitle=\bfseries\large,
+    rounded corners, boxrule=1.5pt, breakable
+}
+\newtcolorbox{taskbox}{
+    colback=light, colframe=secondary,
+    rounded corners, boxrule=1pt,
+    left=5pt, right=5pt, top=5pt, bottom=5pt
+}
+\newtcolorbox{collabbox}{
+    colback=highlight!12, colframe=highlight,
+    title=\textbf{Collaboration Touchpoint}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{milestonebox}{
+    colback=accent!10, colframe=accent,
+    rounded corners, boxrule=1pt
+}
+\newtcolorbox{deliverablebox}{
+    colback=highlight!10, colframe=highlight,
+    rounded corners, boxrule=1pt
+}
+\newtcolorbox{scopebox}{
+    colback=accent!5, colframe=accent,
+    title=\textbf{Your Scope Only}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{outofscopebox}{
+    colback=danger!8, colframe=danger,
+    title=\textbf{Not Your Responsibility}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{approachbox}{
+    colback=secondary!8, colframe=secondary,
+    title=\textbf{How to Approach This Sprint}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{stepbox}[1]{
+    colback=light, colframe=accent,
+    title=\textbf{Step: #1}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{tipbox}{
+    colback=accent!10, colframe=accent,
+    title=\textbf{Tip}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt
+}
+\newtcolorbox{verifybox}{
+    colback=primary!5, colframe=primary,
+    title=\textbf{Verification Checklist}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}
+\newtcolorbox{pitfallbox}{
+    colback=danger!6, colframe=danger,
+    title=\textbf{Common Pitfalls}, fonttitle=\bfseries,
+    rounded corners, boxrule=1pt, breakable
+}

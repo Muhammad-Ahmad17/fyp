@@ -1,0 +1,289 @@
+%===============================================================================
+% Member B Sprint Plan — Edge / CV Development Only
+% 5 Months | Reference: centralized_sprint_plan.tex for joint dates
+%===============================================================================
+\documentclass[12pt,a4paper]{article}
+\input{_preamble.tex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{memberb}{Member B --- CV Track}}
+\rhead{\textcolor{memberb}{Sprint Plan}}
+\rfoot{Page \thepage}
+
+%===============================================================================
+\begin{document}
+%===============================================================================
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\color{primary}\textbf{COMSATS University Islamabad (Lahore Campus)}}\\[0.2cm]
+{\large Department of Computer Engineering}\\[0.5cm]
+\rule{\textwidth}{2pt}\\[0.8cm]
+{\Huge\bfseries\color{memberb} Member B Sprint Plan}\\[0.4cm]
+{\Large Edge / CV Development Lead}\\[0.2cm]
+{\large 5 Months $\cdot$ 5 Sprints --- Your Tasks Only}\\[0.3cm]
+\rule{\textwidth}{2pt}\\[1cm]
+{\small Master timeline: \texttt{.sprint/centralized\_sprint\_plan.tex}}\\
+\vfill
+{\large Spring--Fall 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+%===============================================================================
+\section{Your Role}
+%===============================================================================
+
+\begin{scopebox}
+\textbf{You own:} Three-track CV pipeline --- Worker Detection, PPE (helmet/vest), Hazard (fire/smoke/spill) --- plus compliance engine, evidence capture, and a stable \textbf{handoff dict} for Member A. All work in \texttt{edge/inference/} and \texttt{edge/compliance\_engine/}.
+\end{scopebox}
+
+\begin{outofscopebox}
+\textbf{You must NOT:} Write MQTT code, configure Mosquitto, deploy to Jetson, touch \texttt{transport/}, \texttt{services/}, \texttt{frontend/}, or \texttt{infra/}. Member A deploys your merged PRs and publishes events.
+\end{outofscopebox}
+
+\subsection{Supervisor-approved classes (6 minimum)}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Track} & \textbf{Classes} \\
+\midrule
+Worker Detection & \texttt{worker} \\
+PPE Detection & \texttt{helmet}, \texttt{vest} \\
+Hazard Detection & \texttt{fire}, \texttt{smoke}, \texttt{spill} \\
+\midrule
+Optional stretch & \texttt{gloves}, \texttt{boots} --- only if easy \\
+Out of scope & \texttt{goggles}, \texttt{forklift} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+See \texttt{finalization/DETECTION\_CLASS\_SCOPE.md}.
+
+%===============================================================================
+\section{Sprint 1 (Weeks 1--4): Dataset \& Handoff Spec}
+%===============================================================================
+
+\begin{sprintbox}{Your focus --- Data pipeline and integration boundary}
+
+\begin{taskbox}
+\textbf{Week 1--2}
+\begin{itemize}
+    \item Python venv; install OpenCV, Ultralytics, PyTorch; verify GPU/CUDA
+    \item Clone repo; branch \texttt{feature/b-edge-readme}; first PR
+    \item Source PPE/hazard datasets (Roboflow, Kaggle, custom capture)
+    \item Set up LabelImg / Roboflow / CVAT; YOLO label format
+    \item Create \texttt{edge/inference/README.md} --- 6 classes, three tracks diagram
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 3--4}
+\begin{itemize}
+    \item Annotate first 200+ images (all 6 classes represented)
+    \item Draft \textbf{CV handoff interface} in \texttt{edge/README.md}:
+    \begin{verbatim}
+    get_compliance_event(frame) -> dict
+    # event, zone, worker_id, compliance_score,
+    # confidence, detections[], image_path
+    \end{verbatim}
+    \item Run YOLO pretrained inference demo; save annotated sample outputs
+    \item Sign prerequisites checklist
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 1 done when:} Handoff spec reviewed by Member A; 200+ labels committed; pretrained demo runs locally.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 4 with Member A:} Align handoff dict fields with \texttt{contracts/events.py} (\textbf{M0}). You do not attend MQTT setup --- only review contract mapping document.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 2 (Weeks 5--8): Training \& Compliance Prototype}
+%===============================================================================
+
+\begin{sprintbox}{Your focus --- YOLO training + IoU + compliance logic}
+
+\begin{taskbox}
+\textbf{Week 5--6}
+\begin{itemize}
+    \item Expand dataset to 500+ images; \texttt{data.yaml} for Ultralytics
+    \item Train YOLOv8n; monitor mAP on val set
+    \item Implement IoU function: associate helmet/vest boxes to nearest worker
+    \item Unit tests for IoU and debounce logic
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 7--8}
+\begin{itemize}
+    \item Compliance engine prototype in \texttt{edge/compliance\_engine/}
+    \item Per-zone rules: helmet + vest required (config file, not DB --- A owns DB)
+    \item Rolling 5-frame compliance score
+    \item Evidence: \texttt{cv2.imwrite} on violation; return \texttt{image\_path} in handoff dict
+    \item Violation debounce (60s window per worker/event)
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 2 done when:} Local demo: webcam $\rightarrow$ inference $\rightarrow$ handoff dict printed to console; mAP trending $\geq$ 0.60 on val.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 8:} Demo handoff JSON file to Member A for their test harness (\textbf{M1 prep}). Answer questions in integration session --- no Jetson required yet.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 3 (Weeks 9--12): Model Finalization \& PR Merge}
+%===============================================================================
+
+\begin{sprintbox}{{Your focus --- Hit mAP target; export model; merge PRs}}
+
+\begin{taskbox}
+\textbf{Week 9--10}
+\begin{itemize}
+    \item Dataset 800--1000+ images; fix weak classes (fire/smoke often need more data)
+    \item Retrain; target mAP@0.5 $\geq$ 0.70 on held-out test set
+    \item Confusion matrix + per-class report in \texttt{edge/inference/EVAL.md}
+    \item Hazard track: fire/smoke/spill events independent of worker IoU
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 11--12}
+\begin{itemize}
+    \item Export best weights \texttt{.pt} + ONNX for Member A's TensorRT deploy
+    \item Finalize \texttt{edge/compliance\_engine/}; open PRs; address A's review comments
+    \item \texttt{requirements.txt} + setup instructions for Jetson inference deps
+    \item Optional stretch: gloves/boots only if mAP $\geq$ 0.70 without hurting core 6 classes
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 3 done when:} PRs merged; \textbf{M2} --- Member A confirms handoff harness works with your latest dict output.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 12:} Deliver model package (weights + ONNX + \texttt{EVAL.md}) via agreed storage (Drive/Git LFS). Do not SSH to Jetson.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 4 (Weeks 13--16): Jetson Tuning Support}
+%===============================================================================
+
+\begin{sprintbox}{Your focus --- Support deploy feedback; no deploy yourself}
+
+\begin{taskbox}
+\textbf{Week 13--14}
+\begin{itemize}
+    \item Fix bugs filed by Member A from Jetson deploy (Jira tickets assigned to you)
+    \item Tune confidence thresholds if false positives on edge camera
+    \item Re-export ONNX if architecture changes
+    \item Document known limitations in \texttt{edge/README.md}
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 15--16}
+\begin{itemize}
+    \item On-site or remote support during Member A's integration sessions
+    \item Verify: worker + helmet + vest association stable at Jetson FPS ($>$15 target)
+    \item Hazard detection spot-check near welding zone test footage
+    \item Prepare CV slides for mid/final presentation (your sections only)
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 4 done when:} \textbf{M3} --- Member A confirms Jetson CV + your handoff works; your open Jira blockers = 0.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 16:} Attend integration session; explain compliance logic live if supervisor asks. Member A runs hardware.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Sprint 5 (Weeks 17--20): Polish, Docs \& Viva}
+%===============================================================================
+
+\begin{sprintbox}{Your focus --- CV documentation and viva readiness}
+
+\begin{taskbox}
+\textbf{Week 17--18}
+\begin{itemize}
+    \item Final threshold tuning from demo rehearsal feedback
+    \item Write FYP report sections: dataset, training, evaluation, compliance engine
+    \item Architecture diagram: three tracks $\rightarrow$ handoff $\rightarrow$ (Member A's MQTT)
+    \item Prepare 5-minute CV demo script segment for joint presentation
+\end{itemize}
+\end{taskbox}
+
+\begin{taskbox}
+\textbf{Week 19--20}
+\begin{itemize}
+    \item Benchmark note: FPS + mAP on Jetson (Member A runs; you document numbers)
+    \item Viva prep: explain IoU, debounce, mAP, why 6 classes, handoff boundary
+    \item Review full system architecture (high level) --- not only your module
+    \item Final sprint log; close all \texttt{member-b} Jira tickets
+\end{itemize}
+\end{taskbox}
+
+\begin{deliverablebox}
+\textbf{Your Sprint 5 done when:} \textbf{M4} --- joint demo successful; CV report sections submitted; you can explain every line in your merged PRs.
+\end{deliverablebox}
+
+\begin{collabbox}
+\textbf{Week 20:} Final demo --- you present CV/detection slides; Member A operates platform. Q\&A split by domain.
+\end{collabbox}
+
+\end{sprintbox}
+
+%===============================================================================
+\section{Your Master Checklist}
+%===============================================================================
+
+\begin{itemize}
+    \item[$\square$] 1000+ annotated images (6 classes)
+    \item[$\square$] YOLOv8n mAP@0.5 $\geq$ 0.70
+    \item[$\square$] Worker / PPE / Hazard three-track pipeline
+    \item[$\square$] IoU association (helmet + vest $\rightarrow$ worker)
+    \item[$\square$] Compliance engine + debounce + 5-frame score
+    \item[$\square$] Evidence capture with \texttt{image\_path}
+    \item[$\square$] Handoff dict documented and tested by Member A
+    \item[$\square$] ONNX + weights delivered; PRs merged
+    \item[$\square$] Zero MQTT / Jetson deploy commits under your name
+    \item[$\square$] Weekly sprint logs + Jira tickets closed per sprint
+\end{itemize}
+
+%===============================================================================
+\section{Handoff Dict Reference (Your Output Boundary)}
+%===============================================================================
+
+\begin{verbatim}
+{
+  "event": "helmet_missing | vest_missing | fire | ...",
+  "zone": "welding_bay",
+  "worker_id": 7,
+  "compliance_score": 78,
+  "confidence": 0.92,
+  "detections": [{"class": "helmet", "bbox": [...], "confidence": 0.94}],
+  "image_path": "evidence/session_id/frame_001.jpg"
+}
+\end{verbatim}
+
+Member A adds \texttt{type}, \texttt{priority}, \texttt{timestamp}, \texttt{session\_id} and MQTT publish.
+
+\end{document}
