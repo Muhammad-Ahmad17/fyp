@@ -15,9 +15,9 @@
 | | Member A | Member B |
 |---|----------|----------|
 | **Role** | Platform, MQTT & Jetson deploy | Edge / CV development |
-| **Name** | Muhammad Ahmad | Uzair |
-| **Reg. No.** | _________________ | _________________ |
-| **Email** | _________________ | _________________ |
+| **Name** | Muhammad Ahmad | Muhammad Uzair |
+| **Reg. No.** | FA23-BCE-113 | FA23-BCE-098 |
+| **Email** | FA23-BCE-113@cuilahore.edu.pk | FA23-BCE-098@cuilahore.edu.pk |
 
 We are both responsible for finishing and defending this project together.
 
@@ -133,7 +133,7 @@ Complete your prerequisite checklist first:
 
 ### GitHub (code home)
 
-We keep **all code** in one shared repo: `________________________`
+We keep **all code** in one shared repo: `https://github.com/Muhammad-Ahmad17/fyp.git`
 
 **Everyone should be comfortable with:**
 

@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+
+# Node
+node_modules/
+.vite/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Model weights & large binaries (use Git LFS or Drive)
+*.pt
+*.onnx
+*.engine
+*.weights
+*.h5
+*.pkl
+
+# Dataset images (labels may be committed; images live on Drive/LFS)
+edge/dataset/images/**/*.jpg
+edge/dataset/images/**/*.jpeg
+edge/dataset/images/**/*.png
+edge/dataset/images/**/*.bmp
+!edge/dataset/images/**/.gitkeep
+
+# Evidence / runtime
+evidence/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker volumes / local data
+infra/data/
+redis-data/
+postgres-data/

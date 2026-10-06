@@ -1,0 +1,75 @@
+# Month 1 stack: Mosquitto + Redis + MQTT-Redis bridge + event simulator
+# Usage (from repo root Smart-Surveillance-System/):
+#   docker compose -f infra/docker-compose.yml up --build
+# Prove alerts:
+#   docker compose -f infra/docker-compose.yml exec redis redis-cli XRANGE ppe:alerts - + COUNT 5
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: intellisafe-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: intellisafe-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  mqtt_redis_bridge:
+    build:
+      context: ..
+      dockerfile: transport/mqtt_redis_bridge/Dockerfile
+    container_name: intellisafe-bridge
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_STREAM_ALERTS: ppe:alerts
+      REDIS_STREAM_METRICS: ppe:metrics
+      REDIS_STREAM_HEARTBEAT: ppe:heartbeat
+      REDIS_DEAD_LETTER: ppe:dead_letter
+      MQTT_CLIENT_ID: mqtt-redis-bridge
+    depends_on:
+      - mosquitto
+      - redis
+    restart: unless-stopped
+
+  event_simulator:
+    build:
+      context: ..
+      dockerfile: transport/event_simulator/Dockerfile
+    container_name: intellisafe-simulator
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_CLIENT_ID: event-simulator
+      SIMULATOR_INTERVAL_SEC: "2.0"
+    depends_on:
+      - mosquitto
+      - mqtt_redis_bridge
+    restart: unless-stopped
+
+  # Optional Month-2 warm-start (not required for M0)
+  health_stub:
+    build:
+      context: ..
+      dockerfile: services/health_stub/Dockerfile
+    container_name: intellisafe-health
+    ports:
+      - "8000:8000"
+    profiles:
+      - optional
+    restart: unless-stopped
+
+volumes:
+  redis-data:
