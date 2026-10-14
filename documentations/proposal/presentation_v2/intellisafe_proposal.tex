@@ -554,81 +554,6 @@
 \end{frame}
 
 % =====================================================================
-% 14. Event pipeline & stack
-% =====================================================================
-\begin{frame}{Methodology -- Event Pipeline \& Technology Stack}
-  \begin{columns}[T]
-    \begin{column}{0.53\textwidth}
-      \small\textbf{MQTT topics}~[8]\par\vspace{0.3em}
-      \scriptsize
-      \renewcommand{\arraystretch}{1.25}
-      \begin{tabular}{@{}l L{1.75cm} L{2.6cm}@{}}
-        \toprule
-        \textbf{Topic} & \textbf{From $\rightarrow$ to} & \textbf{Content}\\
-        \midrule
-        \texttt{ppe/alerts}    & Jetson $\rightarrow$ backend & violations, hazards, evidence path\\
-        \texttt{ppe/metrics}   & Jetson $\rightarrow$ backend & rolling compliance score\\
-        \texttt{ppe/heartbeat} & Jetson, ESP32 $\rightarrow$ backend & device health\\
-        \texttt{ppe/alarm}     & Jetson, dashboard $\rightarrow$ ESP32 & siren on / off\\
-        \bottomrule
-      \end{tabular}\par\vspace{0.4em}
-      Every event is JSON: type, event, priority, timestamp, worker\_id, confidence,
-      compliance\_score, detections, image\_path. QoS 1, buffered on the Jetson if the network drops.
-    \end{column}
-    \begin{column}{0.43\textwidth}
-      \small\textbf{Technology stack}\par\vspace{0.3em}
-      \scriptsize
-      \renewcommand{\arraystretch}{1.2}
-      \begin{tabular}{@{}l L{3.5cm}@{}}
-        \toprule
-        Edge     & Jetson Nano, JetPack, Python, Ultralytics YOLOv8, TensorRT, OpenCV, paho-mqtt\\
-        Alarm    & ESP32, Arduino framework, PubSubClient, active buzzer\\
-        Messaging & Eclipse Mosquitto (MQTT)\\
-        Backend  & FastAPI, PostgreSQL, WebSockets, ReportLab, pytest\\
-        Frontend & React + Vite, Recharts, Tailwind CSS\\
-        Tooling  & Roboflow / CVAT, PyTorch, Colab, Git, Docker\\
-        \bottomrule
-      \end{tabular}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% =====================================================================
-% 15. Evaluation
-% =====================================================================
-\begin{frame}{Evaluation Plan}
-  \begin{columns}[T]
-    \begin{column}{0.56\textwidth}
-      \scriptsize
-      \renewcommand{\arraystretch}{1.25}
-      \begin{tabular}{@{}L{3.0cm} l L{2.0cm}@{}}
-        \toprule
-        \textbf{Metric} & \textbf{Target} & \textbf{Method}\\
-        \midrule
-        mAP@0.5 (test set) {\tiny RQ1}       & $\geq$ 0.70 & Ultralytics val\\
-        Per-class precision / recall          & reported    & Confusion matrix\\
-        Inference speed on Jetson {\tiny RQ1} & real time   & On-device benchmark\\
-        False alerts per hour {\tiny RQ2}     & debounce vs.\ none & Live session\\
-        Camera $\rightarrow$ dashboard delay {\tiny RQ3} & measured & Timestamps\\
-        Camera $\rightarrow$ buzzer delay {\tiny RQ3}    & $\leq$ 1\,s & Timestamps\\
-        \bottomrule
-      \end{tabular}
-    \end{column}
-    \begin{column}{0.40\textwidth}
-      \small\textbf{Test scenarios}
-      \begin{itemize}\scriptsize
-        \item Compliant worker $\rightarrow$ green box, no alert.
-        \item Helmet removed $\rightarrow$ one alert, evidence saved.
-        \item Two workers, one non-compliant $\rightarrow$ per-worker result.
-        \item Fire/smoke video $\rightarrow$ CRITICAL alert and \textbf{buzzer sounds}.
-        \item ESP32 unplugged $\rightarrow$ ``alarm offline'' on the dashboard.
-        \item Network drop $\rightarrow$ events buffered, delivered on reconnect.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% =====================================================================
 % 16. Work distribution
 % =====================================================================
 \begin{frame}{Work Distribution}
@@ -708,28 +633,6 @@
   \textcolor{teal}{$\blacksquare$} progress meeting every two weeks \quad
   \textcolor{amber}{$\blacksquare$} kickoff and formal reviews (weeks 1, 4, 10, 16, 24) \quad
   \textcolor{crit}{$\blacksquare$} final defence (week 32)\par}
-\end{frame}
-
-% =====================================================================
-% 18. Meeting schedule
-% =====================================================================
-\begin{frame}{Timeline -- Milestones \& Supervisor Meetings}
-  \small
-  \renewcommand{\arraystretch}{1.3}
-  \begin{tabularx}{\linewidth}{@{}l l X@{}}
-    \toprule
-    \textbf{Week} & \textbf{Meeting} & \textbf{Evidence shown to the supervisor}\\
-    \midrule
-    1  & Kickoff           & Scope agreed: worker, helmet, vest, fire, smoke\\
-    4  & Proposal review   & Proposal approved; dataset sources and tools confirmed\\
-    10 & Mid-term (FYP-I)  & First trained model; compliance engine running on a laptop\\
-    16 & FYP-I evaluation  & Laptop demo from camera to dashboard; FYP-I report\\
-    24 & Mid-term (FYP-II) & Model on the Jetson Nano; live events stored; ESP32 buzzer working\\
-    32 & Final defence     & Full live demo, PDF reports, thesis and demo video\\
-    \midrule
-    Every 2 weeks & Progress meeting & Work done, problems, plan for the next two weeks\\
-    \bottomrule
-  \end{tabularx}
 \end{frame}
 
 % =====================================================================
