@@ -98,9 +98,9 @@
     \begin{column}{0.48\textwidth}
       \begin{enumerate}
         \item Motivation \& Problem Statement
-        \item Literature Review
         \item Methodology: architecture, model, compliance engine, emergency alarm
         \item Objectives
+        \item Literature Review
         \item Research Gap \& Our Contribution
       \end{enumerate}
     \end{column}
@@ -147,41 +147,6 @@
       {\scriptsize\color{slate} Approved detection scope: worker, helmet, vest, fire, smoke.\par}
     \end{column}
   \end{columns}
-\end{frame}
-
-% =====================================================================
-% 5. Literature Review
-% =====================================================================
-\begin{frame}{Literature Review -- Prior Work}
-  \scriptsize
-  \renewcommand{\arraystretch}{1.25}
-  \begin{tabularx}{\linewidth}{@{}L{2.0cm} L{3.0cm} L{2.4cm} L{2.4cm} Y@{}}
-    \toprule
-    \textbf{Work} & \textbf{Method} & \textbf{Data / Platform} & \textbf{Reported result} & \textbf{Open issue for a real site}\\
-    \midrule
-    \textbf{Nath et al.}~[2] \newline {\tiny Autom.\ Constr.\ 2020}
-      & YOLOv3, three approaches; best one detects a worker and classifies PPE state (none / hat / vest / both)
-      & Pictor-v3, $\sim$1.5k images; laptop
-      & \textbf{72.3\% mAP} at 11 FPS
-      & Image-level verdict; no hazards, no alerting, evidence or trends\\
-    \textbf{Wang et al.}~[3] \newline {\tiny Sensors 2021}
-      & Eight YOLO v3/v4/v5 detectors compared
-      & CHV, 1,330 images, 6 classes; Tesla P40 GPU, PC / cloud
-      & YOLOv5x \textbf{86.55\% mAP}; YOLOv5s \textbf{52 FPS}
-      & Detects PPE items only; no worker-level decision; server GPU\\
-    \textbf{de Ven\^ancio et al.}~[7] \newline {\tiny Neural Comput.\ Appl.\ 2022}
-      & YOLOv4 fire/smoke detector + filter pruning
-      & D-Fire, 21k+ images; Raspberry Pi 4
-      & Up to \textbf{83.6\%} less compute, \textbf{83.9\%} less memory, no accuracy loss
-      & Fire only; no PPE, no alert delivery or dashboard\\
-    \bottomrule
-  \end{tabularx}\par\vspace{0.2em}
-  {\tiny\color{slate} Detector basis: YOLO single-pass detection~[4] and its current release,
-  Ultralytics YOLOv8~[5], whose nano variant we deploy.\par}
-
-  \vspace{0.6em}
-  {\small\textbf{Takeaway.} Detection of PPE~[2,\,3] and fire~[7] is solved well enough to build on.
-  What these works leave open is the \emph{system around the detector}.\par}
 \end{frame}
 
 % =====================================================================
@@ -377,6 +342,41 @@
         \item \textbf{Store} events, compliance history and evidence images.
         \item \textbf{Present} live alerts, trends and PDF reports on a dashboard.
       \end{enumerate}
+\end{frame}
+
+% =====================================================================
+% 5. Literature Review
+% =====================================================================
+\begin{frame}{Literature Review -- Prior Work}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabularx}{\linewidth}{@{}L{2.0cm} L{3.0cm} L{2.4cm} L{2.4cm} Y@{}}
+    \toprule
+    \textbf{Work} & \textbf{Method} & \textbf{Data / Platform} & \textbf{Reported result} & \textbf{Open issue for a real site}\\
+    \midrule
+    \textbf{Nath et al.}~[2] \newline {\tiny Autom.\ Constr.\ 2020}
+      & YOLOv3, three approaches; best one detects a worker and classifies PPE state (none / hat / vest / both)
+      & Pictor-v3, $\sim$1.5k images; laptop
+      & \textbf{72.3\% mAP} at 11 FPS
+      & Image-level verdict; no hazards, no alerting, evidence or trends\\
+    \textbf{Wang et al.}~[3] \newline {\tiny Sensors 2021}
+      & Eight YOLO v3/v4/v5 detectors compared
+      & CHV, 1,330 images, 6 classes; Tesla P40 GPU, PC / cloud
+      & YOLOv5x \textbf{86.55\% mAP}; YOLOv5s \textbf{52 FPS}
+      & Detects PPE items only; no worker-level decision; server GPU\\
+    \textbf{de Ven\^ancio et al.}~[7] \newline {\tiny Neural Comput.\ Appl.\ 2022}
+      & YOLOv4 fire/smoke detector + filter pruning
+      & D-Fire, 21k+ images; Raspberry Pi 4
+      & Up to \textbf{83.6\%} less compute, \textbf{83.9\%} less memory, no accuracy loss
+      & Fire only; no PPE, no alert delivery or dashboard\\
+    \bottomrule
+  \end{tabularx}\par\vspace{0.2em}
+  {\tiny\color{slate} Detector basis: YOLO single-pass detection~[4] and its current release,
+  Ultralytics YOLOv8~[5], whose nano variant we deploy.\par}
+
+  \vspace{0.6em}
+  {\small\textbf{Takeaway.} Detection of PPE~[2,\,3] and fire~[7] is solved well enough to build on.
+  What these works leave open is the \emph{system around the detector}.\par}
 \end{frame}
 
 % =====================================================================
