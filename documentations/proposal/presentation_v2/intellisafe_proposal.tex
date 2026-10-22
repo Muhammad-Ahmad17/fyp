@@ -99,14 +99,14 @@
       \begin{enumerate}
         \item Motivation \& Problem Statement
         \item Literature Review
-        \item Research Gap \& Our Contribution
+        \item Methodology: architecture, model, compliance engine, emergency alarm
         \item Objectives
-        \item SDG Mapping
+        \item Research Gap \& Our Contribution
       \end{enumerate}
     \end{column}
     \begin{column}{0.48\textwidth}
       \begin{enumerate}\setcounter{enumi}{5}
-        \item Methodology: architecture, model, compliance engine, emergency alarm, event pipeline
+        \item SDG Mapping
         \item Evaluation Plan
         \item Work Distribution \& Timeline
         \item Conclusion \& References
@@ -182,85 +182,6 @@
   \vspace{0.6em}
   {\small\textbf{Takeaway.} Detection of PPE~[2,\,3] and fire~[7] is solved well enough to build on.
   What these works leave open is the \emph{system around the detector}.\par}
-\end{frame}
-
-% =====================================================================
-% 6. Research Gap & Contribution
-% =====================================================================
-\begin{frame}{Research Gap \& Our Contribution -- How IntelliSafe Differs}
-  \begin{columns}[T]
-    \begin{column}{0.53\textwidth}
-      \scriptsize
-      \renewcommand{\arraystretch}{1.12}
-      \begin{tabular}{@{}l C{0.45cm} C{0.45cm} C{0.45cm} C{1.3cm}@{}}
-        \toprule
-        \textbf{Capability} & [2] & [3] & [7] & \textbf{\color{teal}IntelliSafe}\\
-        \midrule
-        Helmet + vest detection         & \yes & \yes & \nr  & \yes\\
-        Fire / smoke detection          & \nr  & \nr  & \yes & \yes\\
-        PPE + hazards in \emph{one} model & \nr & \nr & \nr  & \yes\\
-        Worker-level compliance verdict & \yes & \nr  & \nr  & \yes\\
-        Temporal debounce, priorities   & \nr  & \nr  & \nr  & \yes\\
-        Embedded / edge inference       & \nr  & \nr  & \yes & \yes\\
-        Event delivery (MQTT)           & \nr  & \nr  & \nr  & \yes\\
-        Image evidence + history        & \nr  & \nr  & \nr  & \yes\\
-        Dashboard, trends, PDF reports  & \nr  & \nr  & \nr  & \yes\\
-        On-site audible alarm (ESP32)   & \nr  & \nr  & \nr  & \yes\\
-        \bottomrule
-      \end{tabular}\par\vspace{0.2em}
-      {\tiny\color{slate}\yes\ addressed in the paper \quad -- not reported in the paper}
-    \end{column}
-    \begin{column}{0.43\textwidth}
-      \begin{block}{Contributions of this FYP}
-        \scriptsize
-        \begin{enumerate}
-          \item \textbf{Unified 5-class edge detector} for PPE and hazards on a Jetson Nano.
-          \item \textbf{Compliance engine}: IoU matching, rolling score, $N$-frame debounce and
-                priority levels.
-          \item \textbf{End-to-end event pipeline}: MQTT, storage, evidence, live dashboard and
-                reports.
-          \item \textbf{Local emergency alarm}: ESP32 buzzer for fire and smoke.
-          \item \textbf{On-device evaluation}: mAP, FPS, latency and false alerts per hour.
-        \end{enumerate}
-      \end{block}
-      \vspace{0.2em}
-      {\scriptsize We do \emph{not} claim a new detector. The contribution is a deployable,
-      measured system.\par}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% =====================================================================
-% 7. Objectives
-% =====================================================================
-\begin{frame}{Objectives}
-      \textbf{\small Objectives}
-      \begin{enumerate}\small
-        \item \textbf{Detect} worker, helmet, vest, fire and smoke with YOLOv8n.
-        \item \textbf{Decide} per-worker compliance, one alert per violation, with evidence.
-        \item \textbf{Deploy} detector and engine in real time on the Jetson Nano.
-        \item \textbf{Deliver} events over MQTT; sound an \textbf{ESP32 buzzer} on fire or smoke.
-        \item \textbf{Store} events, compliance history and evidence images.
-        \item \textbf{Present} live alerts, trends and PDF reports on a dashboard.
-      \end{enumerate}
-\end{frame}
-
-% =====================================================================
-% 8. SDG mapping
-% =====================================================================
-\begin{frame}{SDG Mapping}
-  \centering
-  \small
-  \renewcommand{\arraystretch}{1.6}
-  \begin{tabular}{@{}L{5.6cm} L{6.2cm}@{}}
-    \toprule
-    \textbf{SDG} & \textbf{How IntelliSafe contributes}\\
-    \midrule
-    \prio{leaf}{SDG 3} Good Health and Well-being & Early PPE and fire/smoke detection prevents injuries.\\
-    \prio{crit}{SDG 8} Decent Work and Economic Growth & Continuous monitoring supports safe, decent work.\\
-    \prio{amber}{SDG 9} Industry, Innovation and Infrastructure & Low-cost edge AI brings evidence-based safety to industry.\\
-    \bottomrule
-  \end{tabular}
 \end{frame}
 
 % =====================================================================
@@ -441,6 +362,85 @@
       \end{itemize}
     \end{column}
   \end{columns}
+\end{frame}
+
+% =====================================================================
+% 7. Objectives
+% =====================================================================
+\begin{frame}{Objectives}
+      \textbf{\small Objectives}
+      \begin{enumerate}\small
+        \item \textbf{Detect} worker, helmet, vest, fire and smoke with YOLOv8n.
+        \item \textbf{Decide} per-worker compliance, one alert per violation, with evidence.
+        \item \textbf{Deploy} detector and engine in real time on the Jetson Nano.
+        \item \textbf{Deliver} events over MQTT; sound an \textbf{ESP32 buzzer} on fire or smoke.
+        \item \textbf{Store} events, compliance history and evidence images.
+        \item \textbf{Present} live alerts, trends and PDF reports on a dashboard.
+      \end{enumerate}
+\end{frame}
+
+% =====================================================================
+% 6. Research Gap & Contribution
+% =====================================================================
+\begin{frame}{Research Gap \& Our Contribution -- How IntelliSafe Differs}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \scriptsize
+      \renewcommand{\arraystretch}{1.12}
+      \begin{tabular}{@{}l C{0.45cm} C{0.45cm} C{0.45cm} C{1.3cm}@{}}
+        \toprule
+        \textbf{Capability} & [2] & [3] & [7] & \textbf{\color{teal}IntelliSafe}\\
+        \midrule
+        Helmet + vest detection         & \yes & \yes & \nr  & \yes\\
+        Fire / smoke detection          & \nr  & \nr  & \yes & \yes\\
+        PPE + hazards in \emph{one} model & \nr & \nr & \nr  & \yes\\
+        Worker-level compliance verdict & \yes & \nr  & \nr  & \yes\\
+        Temporal debounce, priorities   & \nr  & \nr  & \nr  & \yes\\
+        Embedded / edge inference       & \nr  & \nr  & \yes & \yes\\
+        Event delivery (MQTT)           & \nr  & \nr  & \nr  & \yes\\
+        Image evidence + history        & \nr  & \nr  & \nr  & \yes\\
+        Dashboard, trends, PDF reports  & \nr  & \nr  & \nr  & \yes\\
+        On-site audible alarm (ESP32)   & \nr  & \nr  & \nr  & \yes\\
+        \bottomrule
+      \end{tabular}\par\vspace{0.2em}
+      {\tiny\color{slate}\yes\ addressed in the paper \quad -- not reported in the paper}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \begin{block}{Contributions of this FYP}
+        \scriptsize
+        \begin{enumerate}
+          \item \textbf{Unified 5-class edge detector} for PPE and hazards on a Jetson Nano.
+          \item \textbf{Compliance engine}: IoU matching, rolling score, $N$-frame debounce and
+                priority levels.
+          \item \textbf{End-to-end event pipeline}: MQTT, storage, evidence, live dashboard and
+                reports.
+          \item \textbf{Local emergency alarm}: ESP32 buzzer for fire and smoke.
+          \item \textbf{On-device evaluation}: mAP, FPS, latency and false alerts per hour.
+        \end{enumerate}
+      \end{block}
+      \vspace{0.2em}
+      {\scriptsize We do \emph{not} claim a new detector. The contribution is a deployable,
+      measured system.\par}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+% 8. SDG mapping
+% =====================================================================
+\begin{frame}{SDG Mapping}
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.6}
+  \begin{tabular}{@{}L{5.6cm} L{6.2cm}@{}}
+    \toprule
+    \textbf{SDG} & \textbf{How IntelliSafe contributes}\\
+    \midrule
+    \prio{leaf}{SDG 3} Good Health and Well-being & Early PPE and fire/smoke detection prevents injuries.\\
+    \prio{crit}{SDG 8} Decent Work and Economic Growth & Continuous monitoring supports safe, decent work.\\
+    \prio{amber}{SDG 9} Industry, Innovation and Infrastructure & Low-cost edge AI brings evidence-based safety to industry.\\
+    \bottomrule
+  \end{tabular}
 \end{frame}
 
 % =====================================================================
