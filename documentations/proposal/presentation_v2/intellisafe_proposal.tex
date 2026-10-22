@@ -107,7 +107,7 @@
     \end{column}
     \begin{column}{0.48\textwidth}
       \begin{enumerate}\setcounter{enumi}{6}
-        \item Methodology: architecture, flow chart, model, compliance engine, emergency alarm, event pipeline
+        \item Methodology: architecture, model, compliance engine, emergency alarm, event pipeline
         \item Evaluation Plan
         \item Work Distribution \& Timeline
         \item Conclusion \& References
@@ -284,13 +284,13 @@
   \centering
   \small
   \renewcommand{\arraystretch}{1.6}
-  \begin{tabular}{@{}L{4.2cm} L{7.2cm}@{}}
+  \begin{tabular}{@{}L{5.6cm} L{6.2cm}@{}}
     \toprule
     \textbf{SDG} & \textbf{How IntelliSafe contributes}\\
     \midrule
-    \prio{leaf}{SDG 3} Good Health & Early PPE and fire/smoke detection prevents injuries.\\
-    \prio{crit}{SDG 8} Decent Work & Continuous monitoring supports safe, decent work.\\
-    \prio{amber}{SDG 9} Innovation & Low-cost edge AI brings evidence-based safety to industry.\\
+    \prio{leaf}{SDG 3} Good Health and Well-being & Early PPE and fire/smoke detection prevents injuries.\\
+    \prio{crit}{SDG 8} Decent Work and Economic Growth & Continuous monitoring supports safe, decent work.\\
+    \prio{amber}{SDG 9} Industry, Innovation and Infrastructure & Low-cost edge AI brings evidence-based safety to industry.\\
     \bottomrule
   \end{tabular}
 \end{frame}
@@ -352,54 +352,6 @@
   {\scriptsize\color{slate} The broker runs on the site LAN, so the buzzer still sounds if the backend
   or internet link is down. Event format is fixed up front, so model and platform work proceed in
   parallel; a simulator feeds the backend until the Jetson is ready.\par}
-\end{frame}
-
-% =====================================================================
-% 10. Flow chart
-% =====================================================================
-\begin{frame}{Methodology -- Flow Chart}
-  \centering
-  \resizebox{\linewidth}{!}{%
-  \begin{tikzpicture}
-    % row A
-    \node[io]        (cap)   at (0, 0)    {Capture\\frame};
-    \node[blk=teal]  (yolo)  at (2.5, 0)  {YOLOv8n\\inference};
-    \node[dec]       (d1)    at (5.0, 0)  {Fire or\\smoke?};
-    \node[blk=amber] (iou)   at (7.5, 0)  {Match helmet \&\\vest to worker (IoU)};
-    \node[blk=amber] (score) at (10.0, 0) {Check rules,\\update score};
-    \node[dec]       (d2)    at (12.6, 0) {Violation for\\$N$ frames?};
-    % row B
-    \node[term]      (start) at (0,-1.9)  {Start};
-    \node[blk=crit]  (crit)  at (5.0,-1.9){Raise CRITICAL\\hazard event};
-    \node[blk=navy]  (evid)  at (8.8,-1.9){Save evidence\\image};
-    \node[blk=amber] (alert) at (12.6,-1.9){One alert per\\violation, priority};
-    % row C
-    \node[blk=crit]  (esp)   at (5.0,-3.5){ESP32: buzzer\\+ strobe on site};
-    \node[blk=navy]  (pub)   at (8.8,-3.5){Publish JSON\\event (MQTT)};
-    \node[blk=leaf]  (back)  at (12.6,-3.5){Backend stores,\\dashboard alert};
-
-    \draw[arr] (start) -- (cap);
-    \draw[arr] (cap) -- (yolo);
-    \draw[arr] (yolo) -- (d1);
-    \draw[arr] (d1) -- node[lbl, above] {no} (iou);
-    \draw[arr] (iou) -- (score);
-    \draw[arr] (score) -- (d2);
-    \draw[arr] (d2.north) -- ++(0,0.55) -| node[lbl, pos=0.25, above] {no -- next frame} (cap.north);
-    \draw[arrc] (d1) -- node[lbl, right] {yes} (crit);
-    \draw[arr] (d2) -- node[lbl, right] {yes} (alert);
-    \draw[arrc] (crit) -- (evid);
-    \draw[arr] (alert) -- (evid);
-    \draw[arr] (evid) -- (pub);
-    \draw[arrc] (pub) -- node[lbl, above] {\textcolor{crit}{CRITICAL only}} (esp);
-    \draw[arr] (pub) -- node[lbl, above] {all events} (back);
-  \end{tikzpicture}}
-
-  \vspace{0.4em}
-  {\scriptsize
-  \tikz\node[blk=crit, minimum width=0.35cm, minimum height=0.22cm]{}; hazard path \quad
-  \tikz\node[blk=amber, minimum width=0.35cm, minimum height=0.22cm]{}; PPE compliance path \quad
-  \tikz\node[blk=navy, minimum width=0.35cm, minimum height=0.22cm]{}; evidence \& delivery\par
-  \vspace{0.2em}{\color{slate} The edge loop runs every frame; the backend and alarm unit react asynchronously.}\par}
 \end{frame}
 
 % =====================================================================
