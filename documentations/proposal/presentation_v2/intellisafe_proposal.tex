@@ -97,7 +97,6 @@
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
       \begin{enumerate}
-        \item Abstract
         \item Motivation \& Problem Statement
         \item Literature Review
         \item Research Gap \& Our Contribution
@@ -106,43 +105,12 @@
       \end{enumerate}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \begin{enumerate}\setcounter{enumi}{6}
+      \begin{enumerate}\setcounter{enumi}{5}
         \item Methodology: architecture, model, compliance engine, emergency alarm, event pipeline
         \item Evaluation Plan
         \item Work Distribution \& Timeline
         \item Conclusion \& References
       \end{enumerate}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% =====================================================================
-% 3. Abstract
-% =====================================================================
-\begin{frame}{Abstract}
-  \begin{columns}[c]
-    \begin{column}{0.60\textwidth}
-      \small
-      IntelliSafe is an edge-based safety monitoring system for industrial and construction sites.
-      A camera on an \textbf{NVIDIA Jetson Nano} runs a single \textbf{YOLOv8n} detector for
-      \emph{worker, helmet, vest, fire} and \emph{smoke}. A \textbf{compliance engine} links each
-      helmet and vest to its worker, keeps a rolling compliance score, and raises \emph{one} alert
-      per continuing violation with an image as evidence.
-
-      \medskip
-      Events travel over \textbf{MQTT} to a backend that stores them, streams them to a supervisor
-      dashboard and produces PDF compliance reports. For fire or smoke, an \textbf{ESP32 alarm unit}
-      sounds a buzzer on site (target: within one second), even if the internet link is down.
-    \end{column}
-    \begin{column}{0.36\textwidth}
-      \centering
-      \begin{tikzpicture}[node distance=0.32cm]
-        \node[blk=teal, minimum width=3.6cm] (a) {\textbf{See} -- detect workers, PPE, hazards};
-        \node[blk=amber, minimum width=3.6cm, below=of a] (b) {\textbf{Decide} -- per-worker compliance};
-        \node[blk=crit, minimum width=3.6cm, below=of b] (c) {\textbf{Alert} -- dashboard + on-site buzzer};
-        \node[blk=leaf, minimum width=3.6cm, below=of c] (d) {\textbf{Record} -- evidence, trends, reports};
-        \draw[arr] (a) -- (b); \draw[arr] (b) -- (c); \draw[arr] (c) -- (d);
-      \end{tikzpicture}
     \end{column}
   \end{columns}
 \end{frame}
