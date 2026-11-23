@@ -1,0 +1,28 @@
+{
+  "name": "@intellisafe/bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MQTT -> Redis Streams bridge with contract validation and dead-letter",
+  "exports": {
+    "./handler": "./src/handler.ts",
+    "./bridge": "./src/bridge.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsup",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ioredis": "^5.11.1",
+    "mqtt": "^5.16.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7",
+    "@intellisafe/contracts": "*"
+  },
+  "devDependencies": {
+    "ioredis-mock": "^8.13.1"
+  }
+}

@@ -3,6 +3,11 @@
 **Status:** Approved by supervisor — do not add classes without written approval.  
 **Last updated:** 2026
 
+> **Scope change (pending supervisor confirmation):** the `spill` class and the zone concept were
+> removed because the project is tested in a single room. Classes are now worker, helmet, vest, fire,
+> smoke (5). Ahmad decided this on the platform side; get the supervisor's written OK and Uzair's
+> agreement before treating it as final.
+
 ---
 
 ## Overview
@@ -12,7 +17,7 @@ Edge perception is split into **three detection tracks** that feed the **Complia
 ```
 Worker Detection  →  Workers & Positions  ──┐
 PPE Detection       →  Helmet, Vest         ──┼──→  Compliance Engine
-Hazard Detection    →  Fire, Smoke, Spills  ──┘
+Hazard Detection    →  Fire, Smoke          ──┘
 ```
 
 ---
@@ -26,9 +31,8 @@ Hazard Detection    →  Fire, Smoke, Spills  ──┘
 | **PPE Detection** | `vest` | Required PPE — violation: `vest_missing` |
 | **Hazard Detection** | `fire` | Critical hazard — event: `fire` |
 | **Hazard Detection** | `smoke` | Critical hazard — event: `smoke` |
-| **Hazard Detection** | `spill` | Environment hazard — event: `spill` |
 
-**Minimum model classes:** `worker`, `helmet`, `vest`, `fire`, `smoke`, `spill` (6 classes)
+**Minimum model classes:** `worker`, `helmet`, `vest`, `fire`, `smoke` (5 classes)
 
 ---
 
@@ -58,14 +62,14 @@ Do **not** train or demo these unless supervisor approves a scope change:
 Aligned with required classes only:
 
 ```
-helmet_missing | vest_missing | fire | smoke | spill | compliant
+helmet_missing | vest_missing | fire | smoke | compliant
 ```
 
 ---
 
-## Zone Rules (Database / UI)
+## Site Rules (Database / UI)
 
-Per-zone PPE requirements — **supervisor scope:**
+PPE requirements for the site (single room, no zones) — **supervisor scope:**
 
 | Field | Required in UI |
 |-------|----------------|
@@ -80,15 +84,15 @@ Per-zone PPE requirements — **supervisor scope:**
 
 1. **Worker track** — detect workers; assign stable `worker_id` across frames  
 2. **PPE track** — associate helmet & vest boxes to nearest worker via IoU  
-3. **Hazard track** — fire/smoke/spill in zone trigger hazard events (not worker-associated)  
-4. **Score** — rolling 5-frame compliance based on **helmet + vest** per zone rules  
+3. **Hazard track** — fire/smoke trigger hazard events (not worker-associated)  
+4. **Score** — rolling 5-frame compliance based on **helmet + vest** per site rules  
 5. **Debounce** — one alert per violation type per worker per window  
 
 ---
 
 ## Member B Deliverable Checklist (CV)
 
-- [ ] YOLO model trained on **6 required classes** minimum  
+- [ ] YOLO model trained on **5 required classes** minimum  
 - [ ] Three-track pipeline documented in `edge/inference/README.md`  
 - [ ] IoU association: helmet & vest → worker  
 - [ ] Hazard events independent of worker association  

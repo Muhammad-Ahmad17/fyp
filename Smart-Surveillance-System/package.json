@@ -1,0 +1,32 @@
+{
+  "name": "intellisafe",
+  "private": true,
+  "type": "module",
+  "description": "IntelliSafe - real-time working site safety monitoring platform",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint .",
+    "export-schema": "npm run export-schema -w @intellisafe/contracts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5",
+    "tsx": "^4.23.15",
+    "tsup": "^9.0.0",
+    "eslint": "^10.13.0",
+    "@eslint/js": "^10.0.1",
+    "typescript-eslint": "^8.72.1",
+    "globals": "^17.13.0"
+  }
+}

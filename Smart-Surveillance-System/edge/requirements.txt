@@ -1,0 +1,5 @@
+# Runtime dependencies of the edge agent (Jetson / laptop).
+jsonschema>=4.21
+paho-mqtt>=2.1
+# Camera/video sources only (on Jetson use the JetPack OpenCV instead):
+# opencv-python

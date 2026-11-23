@@ -1,0 +1,25 @@
+{
+  "name": "@intellisafe/simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mock event publisher (Jetson stand-in). Also exports the generator used by the API trigger.",
+  "exports": {
+    "./generator": "./src/generator.ts",
+    "./publisher": "./src/publisher.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsup",
+    "start": "node dist/main.js",
+    "mock": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "mqtt": "^5.16.1",
+    "pino": "^10.4.0",
+    "@intellisafe/contracts": "*"
+  },
+  "devDependencies": {}
+}

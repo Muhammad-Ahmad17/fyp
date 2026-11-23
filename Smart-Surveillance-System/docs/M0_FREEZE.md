@@ -4,11 +4,11 @@
 
 ## Sign-off
 
-Walk one sample handoff JSON next to `contracts/events.py`, then sign:
+Walk one sample handoff JSON next to `contracts/README.md` (v1.0, JSON Schema in `contracts/event.schema.json`), then sign:
 
 | Item | Status | Signatures |
 |------|--------|------------|
-| `contracts/events.py` frozen | Ready for review | A: ______  B: ______  Date: ______ |
+| Event contract v1.0 (`packages/contracts`) frozen | Ready for review | A: ______  B: ______  Date: ______ |
 | `edge/README.md` handoff matches contract | Ready for review | A: ______  B: ______  Date: ______ |
 | `XRANGE ppe:alerts` shows ≥ 5 valid events | Prove via infra README | A: ______ |
 | Handoff fields B emits / A adds documented | See edge + contracts README | Both |

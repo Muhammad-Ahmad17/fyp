@@ -1,4 +1,4 @@
-# YOLO dataset config — IntelliSafe (6 classes)
+# YOLO dataset config — IntelliSafe (5 classes)
 
 path: .  # relative to this file: edge/dataset/
 train: images/train
@@ -11,7 +11,6 @@ names:
   2: vest
   3: fire
   4: smoke
-  5: spill
 
 # Split: 80% train / 10% val / 10% test
 # Label format: class x_center y_center width height (normalized 0-1)

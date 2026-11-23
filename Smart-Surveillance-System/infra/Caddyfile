@@ -1,0 +1,32 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+	}
+
+	# The edge device (Jetson) uploads alert frames here. It cannot do browser basic auth, so this one
+	# route is exempt; the API itself enforces the EVIDENCE_UPLOAD_TOKEN (x-api-key) and the image checks.
+	@edge_upload {
+		method POST
+		path /api/evidence
+	}
+	handle @edge_upload {
+		reverse_proxy frontend:80
+	}
+
+	# Everything else (dashboard, REST, WebSocket) needs the dashboard login.
+	handle {
+		basic_auth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		# nginx in the frontend container serves the SPA and proxies /api and /ws to the API.
+		reverse_proxy frontend:80
+	}
+}

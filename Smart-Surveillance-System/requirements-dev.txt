@@ -1,3 +1,4 @@
-# Root deps for local contract + IoU tests (not the Docker images)
-pydantic>=2.0,<3
+# Python is used for the edge/CV side only (everything else is Node/TypeScript).
 pytest>=8.0
+jsonschema>=4.21
+paho-mqtt>=2.1

@@ -1,0 +1,90 @@
+name: Deploy
+
+# Called by CI after images are published, or run by hand to redeploy / roll back:
+#   Actions -> Deploy -> Run workflow -> image_tag = a previous commit SHA
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to deploy (commit SHA, or "latest")
+        required: true
+        default: latest
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production # add required reviewers in repo settings if you want a manual gate
+    permissions:
+      contents: read
+      packages: read
+    defaults:
+      run:
+        working-directory: Smart-Surveillance-System
+    env:
+      APP_DIR: /opt/intellisafe
+      SSH_TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH setup
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          if [ -n "$KNOWN_HOSTS" ]; then printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts; else ssh-keyscan -H "$HOST" > ~/.ssh/known_hosts; fi
+          printf 'Host *\n  IdentityFile ~/.ssh/id_deploy\n  ServerAliveInterval 30\n' > ~/.ssh/config
+
+      - name: Sync compose files (no secrets are overwritten)
+        run: |
+          rsync -az --delete \
+            --exclude 'mosquitto/passwd' --exclude 'mosquitto/acl' --exclude '.env*' \
+            infra/ "$SSH_TARGET:$APP_DIR/infra/"
+
+      - name: Pull images and restart
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          # The short-lived workflow token is piped over SSH so no registry credentials live on the VM.
+          printf '%s' "$GH_TOKEN" | ssh "$SSH_TARGET" "docker login ghcr.io -u '$GH_ACTOR' --password-stdin"
+          ssh "$SSH_TARGET" bash -s <<REMOTE
+          set -euo pipefail
+          cd $APP_DIR
+          export REGISTRY=$REGISTRY IMAGE_TAG=$IMAGE_TAG
+          C="docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml"
+          \$C pull
+          \$C up -d --no-build --remove-orphans
+          docker image prune -f >/dev/null
+          REMOTE
+
+      - name: Verify the new version is healthy
+        run: |
+          ssh "$SSH_TARGET" bash -s <<'REMOTE'
+          set -uo pipefail
+          cd /opt/intellisafe
+          for i in $(seq 1 30); do
+            if docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml \
+                 exec -T api wget -qO- http://127.0.0.1:3000/api/health | grep -q '"status":"ok"'; then
+              echo "api healthy"; exit 0
+            fi
+            sleep 4
+          done
+          docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml ps
+          docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml logs --tail=40 api
+          exit 1
+          REMOTE

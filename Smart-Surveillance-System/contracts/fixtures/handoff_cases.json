@@ -1,0 +1,250 @@
+{
+  "_comment": "Golden cases for handoff -> message. Run by the TypeScript platform (packages/contracts/test/fixtures.test.ts) and by the Python edge agent (edge/test_agent.py), so the two implementations cannot drift apart.",
+  "cases": [
+    {
+      "name": "helmet missing is HIGH",
+      "handoff": {
+        "event": "helmet_missing",
+        "camera_id": "cam-01",
+        "compliance_score": 78,
+        "confidence": 0.92,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "worker_id": 7
+      },
+      "expect": {
+        "type": "alert",
+        "topic": "ppe/alerts/HIGH",
+        "priority": "HIGH",
+        "worker_id": 7
+      }
+    },
+    {
+      "name": "vest missing is HIGH",
+      "handoff": {
+        "event": "vest_missing",
+        "camera_id": "cam-01",
+        "compliance_score": 65,
+        "confidence": 0.85,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "worker_id": 2
+      },
+      "expect": {
+        "type": "alert",
+        "topic": "ppe/alerts/HIGH",
+        "priority": "HIGH",
+        "worker_id": 2
+      }
+    },
+    {
+      "name": "fire is CRITICAL and drops any worker_id",
+      "handoff": {
+        "event": "fire",
+        "camera_id": "cam-01",
+        "compliance_score": 50,
+        "confidence": 0.97,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "worker_id": 7
+      },
+      "expect": {
+        "type": "alert",
+        "topic": "ppe/alerts/CRITICAL",
+        "priority": "CRITICAL",
+        "worker_id": null
+      }
+    },
+    {
+      "name": "smoke is CRITICAL",
+      "handoff": {
+        "event": "smoke",
+        "camera_id": "cam-01",
+        "compliance_score": 55,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": []
+      },
+      "expect": {
+        "type": "alert",
+        "topic": "ppe/alerts/CRITICAL",
+        "priority": "CRITICAL",
+        "worker_id": null
+      }
+    },
+    {
+      "name": "compliant becomes metrics, worker_count counted from detections",
+      "handoff": {
+        "event": "compliant",
+        "camera_id": "cam-01",
+        "compliance_score": 96.5,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [
+          {
+            "class": "worker",
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "confidence": 0.9
+          },
+          {
+            "class": "worker",
+            "bbox": [
+              20,
+              0,
+              10,
+              10
+            ],
+            "confidence": 0.9
+          },
+          {
+            "class": "helmet",
+            "bbox": [
+              0,
+              0,
+              5,
+              5
+            ],
+            "confidence": 0.9
+          }
+        ]
+      },
+      "expect": {
+        "type": "metrics",
+        "topic": "ppe/metrics/jetson-01",
+        "worker_count": 2,
+        "violation_count": 0,
+        "compliance_score": 96.5
+      }
+    },
+    {
+      "name": "compliant with explicit counts",
+      "handoff": {
+        "event": "compliant",
+        "camera_id": "cam-01",
+        "compliance_score": 90,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "worker_count": 5,
+        "violation_count": 1
+      },
+      "expect": {
+        "type": "metrics",
+        "topic": "ppe/metrics/jetson-01",
+        "worker_count": 5,
+        "violation_count": 1,
+        "compliance_score": 90
+      }
+    },
+    {
+      "name": "PPE event without worker_id is rejected",
+      "handoff": {
+        "event": "helmet_missing",
+        "camera_id": "cam-01",
+        "compliance_score": 70,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": []
+      },
+      "expect": {
+        "error": true
+      }
+    },
+    {
+      "name": "edge must not send priority",
+      "handoff": {
+        "event": "fire",
+        "camera_id": "cam-01",
+        "compliance_score": 70,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "priority": "LOW"
+      },
+      "expect": {
+        "error": true
+      }
+    },
+    {
+      "name": "zone is not part of the contract",
+      "handoff": {
+        "event": "fire",
+        "camera_id": "cam-01",
+        "compliance_score": 70,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": [],
+        "zone": "general"
+      },
+      "expect": {
+        "error": true
+      }
+    },
+    {
+      "name": "spill is not a supported event",
+      "handoff": {
+        "event": "spill",
+        "camera_id": "cam-01",
+        "compliance_score": 70,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": []
+      },
+      "expect": {
+        "error": true
+      }
+    },
+    {
+      "name": "unknown event is rejected",
+      "handoff": {
+        "event": "no_boots",
+        "camera_id": "cam-01",
+        "compliance_score": 70,
+        "confidence": 0.9,
+        "frame": {
+          "width": 1280,
+          "height": 720
+        },
+        "detections": []
+      },
+      "expect": {
+        "error": true
+      }
+    }
+  ]
+}

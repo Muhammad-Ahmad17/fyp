@@ -29,7 +29,6 @@ SCENES = [
     ("sample_helmet_missing", [(0, 0.45, 0.55, 0.25, 0.7), (2, 0.45, 0.55, 0.2, 0.25)]),
     ("sample_fire", [(3, 0.6, 0.5, 0.3, 0.4)]),
     ("sample_smoke", [(4, 0.4, 0.4, 0.35, 0.35)]),
-    ("sample_spill", [(5, 0.5, 0.7, 0.4, 0.2)]),
 ]
 
 
@@ -45,9 +44,8 @@ def _draw(name: str, boxes: list[tuple[float, ...]]) -> None:
         2: (50, 200, 120),
         3: (255, 80, 60),
         4: (180, 180, 180),
-        5: (160, 100, 40),
     }
-    names = {0: "worker", 1: "helmet", 2: "vest", 3: "fire", 4: "smoke", 5: "spill"}
+    names = {0: "worker", 1: "helmet", 2: "vest", 3: "fire", 4: "smoke"}
     label_lines: list[str] = []
     for cls, xc, yc, bw, bh in boxes:
         x1 = int((xc - bw / 2) * W)

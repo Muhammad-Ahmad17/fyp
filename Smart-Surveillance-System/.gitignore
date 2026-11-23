@@ -16,7 +16,8 @@ node_modules/
 
 # IDE / OS
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 *.swp
 .DS_Store
 Thumbs.db
@@ -47,3 +48,8 @@ htmlcov/
 infra/data/
 redis-data/
 postgres-data/
+
+# Production secrets
+infra/mosquitto/passwd
+infra/mosquitto/acl
+.env.tmp
