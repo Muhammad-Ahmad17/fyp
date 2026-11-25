@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+.venv
+.git
+.pytest_cache
+**/__pycache__
+edge/dataset
+docs
+.env
+*.pt
+*.onnx

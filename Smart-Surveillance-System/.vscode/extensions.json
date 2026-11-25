@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-azuretools.vscode-docker",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "vitest.explorer",
+    "ms-python.python",
+    "ckolkman.vscode-postgres",
+    "cweijan.vscode-redis-client",
+    "redhat.vscode-yaml",
+    "tomoki1207.pdf"
+  ]
+}
