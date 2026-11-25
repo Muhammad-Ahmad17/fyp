@@ -1,7 +1,6 @@
 """Checks the edge handoff against the platform contract (contracts/event.schema.json).
 
-The schema is generated from the TypeScript source of truth (packages/contracts):
-    npm run export-schema
+The schema lives in contracts/event.schema.json (same fields as contracts/events.py).
 Member B can run this test without Node installed.
 """
 

@@ -1,4 +1,4 @@
-import type { AlertDTO } from "@intellisafe/contracts";
+import type { AlertDTO } from "../lib/contract";
 import { EVENT_LABEL, relativeTime } from "../lib/format";
 import { useNow } from "../lib/useNow";
 import { useStore } from "../store";

@@ -1,7 +1,8 @@
 """MQTT → Redis Streams bridge.
 
-Subscribes to ppe/#, validates JSON against the frozen contract when possible,
-XADDs to the matching stream. Bad payloads go to a dead-letter stream.
+Subscribes to ppe/#, validates each payload against the v1.0 contract,
+checks that the topic matches the payload, then XADDs. Anything invalid
+goes to ppe:dead_letter.
 """
 
 from __future__ import annotations
@@ -13,53 +14,50 @@ import signal
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 import paho.mqtt.client as mqtt
 import redis
+from pydantic import ValidationError
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] bridge: %(message)s",
-)
+from contracts.events import SafetyMessageAdapter
+from contracts.transport import STREAMS, is_alarm_topic, stream_fields_for, stream_for_type, topic_mismatch
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] bridge: %(message)s")
 log = logging.getLogger("bridge")
 
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_USERNAME = os.getenv("MQTT_USERNAME") or ""
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD") or ""
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "mqtt-redis-bridge")
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-STREAM_ALERTS = os.getenv("REDIS_STREAM_ALERTS", "ppe:alerts")
-STREAM_METRICS = os.getenv("REDIS_STREAM_METRICS", "ppe:metrics")
-STREAM_HEARTBEAT = os.getenv("REDIS_STREAM_HEARTBEAT", "ppe:heartbeat")
-DEAD_LETTER = os.getenv("REDIS_DEAD_LETTER", "ppe:dead_letter")
+REDIS_URL = os.getenv("REDIS_URL")
+DEAD_LETTER = STREAMS["dead_letter"]
 
 _running = True
 
 
-def _stream_for_topic(topic: str) -> Optional[str]:
-    if topic.startswith("ppe/alerts/"):
-        return STREAM_ALERTS
-    if topic.startswith("ppe/metrics/"):
-        return STREAM_METRICS
-    if topic.startswith("ppe/heartbeat/"):
-        return STREAM_HEARTBEAT
-    return None
-
-
-def _connect_redis(retries: int = 30, delay: float = 1.0) -> redis.Redis:
-    last_err: Exception | None = None
-    for attempt in range(1, retries + 1):
-        try:
-            r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-            r.ping()
-            log.info("Connected to Redis at %s:%s", REDIS_HOST, REDIS_PORT)
-            return r
-        except Exception as exc:  # noqa: BLE001
-            last_err = exc
-            log.warning("Redis connect attempt %s/%s failed: %s", attempt, retries, exc)
-            time.sleep(delay)
-    raise RuntimeError(f"Could not connect to Redis: {last_err}")
+def handle_message(r: redis.Redis, topic: str, raw: str, received_at: str | None = None) -> str:
+    """Validate one MQTT payload and XADD it. Returns 'ok', 'ignored', or 'dead_letter'."""
+    if is_alarm_topic(topic):
+        return "ignored"
+    received_at = received_at or datetime.now(timezone.utc).isoformat()
+    try:
+        data = json.loads(raw)
+        msg = SafetyMessageAdapter.validate(data)
+    except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+        _dead_letter(r, topic, raw, f"validation_error:{exc}")
+        return "dead_letter"
+    mismatch = topic_mismatch(topic, msg)
+    if mismatch:
+        _dead_letter(r, topic, raw, mismatch)
+        return "dead_letter"
+    fields = stream_fields_for(topic, msg, received_at)
+    r.xadd(stream_for_type(msg.type), fields)
+    log.info("XADD %s event_id=%s type=%s", stream_for_type(msg.type), fields["event_id"], msg.type)
+    return "ok"
 
 
 def _dead_letter(r: redis.Redis, topic: str, payload: str, reason: str) -> None:
@@ -72,48 +70,32 @@ def _dead_letter(r: redis.Redis, topic: str, payload: str, reason: str) -> None:
             "received_at": datetime.now(timezone.utc).isoformat(),
         },
     )
+    log.warning("dead-letter %s: %s", topic, reason)
+
+
+def _connect_redis(retries: int = 30, delay: float = 1.0) -> redis.Redis:
+    last_err: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            client = redis.Redis.from_url(REDIS_URL, decode_responses=True) if REDIS_URL else redis.Redis(
+                host=REDIS_HOST, port=REDIS_PORT, decode_responses=True
+            )
+            client.ping()
+            log.info("Connected to Redis")
+            return client
+        except Exception as exc:  # noqa: BLE001
+            last_err = exc
+            log.warning("Redis connect attempt %s/%s failed: %s", attempt, retries, exc)
+            time.sleep(delay)
+    raise RuntimeError(f"Could not connect to Redis: {last_err}")
 
 
 def _on_message(client: mqtt.Client, userdata: dict[str, Any], msg: mqtt.MQTTMessage) -> None:
-    r: redis.Redis = userdata["redis"]
-    topic = msg.topic
     raw = msg.payload.decode("utf-8", errors="replace")
-    stream = _stream_for_topic(topic)
-    if stream is None:
-        _dead_letter(r, topic, raw, "unknown_topic")
-        log.warning("Unknown topic (dead-lettered): %s", topic)
-        return
-
-    try:
-        data = json.loads(raw)
-        if not isinstance(data, dict):
-            raise ValueError("payload must be a JSON object")
-    except (json.JSONDecodeError, ValueError) as exc:
-        _dead_letter(r, topic, raw, f"parse_error:{exc}")
-        log.warning("Bad JSON on %s: %s", topic, exc)
-        return
-
-    # Soft validation — keep pipeline moving even if optional fields missing
-    fields = {
-        "topic": topic,
-        "payload": json.dumps(data),
-        "received_at": datetime.now(timezone.utc).isoformat(),
-        "event": str(data.get("event", "")),
-        "priority": str(data.get("priority", "")),
-        "zone": str(data.get("zone", "")),
-        "session_id": str(data.get("session_id", "")),
-    }
-    msg_id = r.xadd(stream, fields)
-    log.info("XADD %s id=%s event=%s", stream, msg_id, fields["event"])
+    handle_message(userdata["redis"], msg.topic, raw)
 
 
-def _on_connect(
-    client: mqtt.Client,
-    userdata: dict[str, Any],
-    flags: Any,
-    reason_code: Any,
-    properties: Any = None,
-) -> None:
+def _on_connect(client: mqtt.Client, userdata: dict[str, Any], flags: Any, reason_code: Any, properties: Any = None) -> None:
     code = getattr(reason_code, "value", reason_code)
     if code == 0:
         client.subscribe("ppe/#")
@@ -122,13 +104,7 @@ def _on_connect(
         log.error("MQTT connect failed reason=%s", reason_code)
 
 
-def _on_disconnect(
-    client: mqtt.Client,
-    userdata: dict[str, Any],
-    flags: Any,
-    reason_code: Any,
-    properties: Any = None,
-) -> None:
+def _on_disconnect(client: mqtt.Client, userdata: dict[str, Any], flags: Any, reason_code: Any, properties: Any = None) -> None:
     log.warning("MQTT disconnected reason=%s — paho will retry", reason_code)
 
 
@@ -143,11 +119,9 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _handle_signal)
 
     r = _connect_redis()
-    client = mqtt.Client(
-        mqtt.CallbackAPIVersion.VERSION2,
-        client_id=MQTT_CLIENT_ID,
-        protocol=mqtt.MQTTv311,
-    )
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID, protocol=mqtt.MQTTv311)
+    if MQTT_USERNAME:
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD or None)
     client.user_data_set({"redis": r})
     client.on_connect = _on_connect
     client.on_message = _on_message
@@ -169,7 +143,6 @@ def main() -> None:
             log.error("MQTT connection error: %s — retry in %.1fs", exc, backoff)
             time.sleep(backoff)
             backoff = min(backoff * 2, 30.0)
-
     log.info("Bridge stopped")
 
 

@@ -1,9 +1,9 @@
 # Event Contract v1.0 (MQTT mock events)
 
 **Status:** v1.0 — proposed, awaiting joint sign-off (Ahmad + Uzair).
-**Source of truth:** [`packages/contracts`](../packages/contracts) (TypeScript + Zod).
-**For Python/edge:** [`event.schema.json`](event.schema.json), generated from the Zod schemas with
-`npm run export-schema` (a test fails if it is stale). Validate with `jsonschema`
+**Source of truth:** [`events.py`](events.py) (Python / Pydantic).
+**Dashboard types:** [`frontend/src/lib/contract.ts`](../frontend/src/lib/contract.ts) (same field names).
+**JSON Schema for the edge:** [`event.schema.json`](event.schema.json). Validate with `jsonschema`
 (see `edge/test_contract_schema.py`).
 
 Three message types share one envelope. The bridge rejects anything that does not validate
@@ -61,6 +61,7 @@ device also registers an `offline` heartbeat as its MQTT last will.
 | `ppe/alerts/{priority}` | `ppe:alerts` | QoS 1 |
 | `ppe/metrics/{device_id}` | `ppe:metrics` | QoS 1 |
 | `ppe/heartbeat/{device_id}` | `ppe:heartbeat` | QoS 1, retained |
+| `ppe/alarm` | *(not a Redis stream)* | QoS 1, retained. `{cmd, reason, camera_id}`. Bridge ignores it. |
 | anything invalid | `ppe:dead_letter` | `reason`, `topic`, `payload` fields |
 
 The topic must agree with the payload (priority/device_id); a mismatch is dead-lettered.
@@ -91,7 +92,7 @@ The topic must agree with the payload (priority/device_id); a mismatch is dead-l
 }
 ```
 
-Metrics and heartbeat examples: `packages/contracts/src/examples.ts`.
+Metrics and heartbeat examples: `EXAMPLE_*` in `events.py`.
 
 ## Changes from the Month 1 draft
 
@@ -114,6 +115,6 @@ and `frame` fields (and optional `worker_count` / `violation_count`) before we f
 
 ## Changing the contract
 
-1. Edit `packages/contracts/src/*`, add/adjust tests.
-2. `npm run export-schema` and commit `event.schema.json`.
+1. Edit `contracts/events.py` and `contracts/test_events.py`.
+2. Update `frontend/src/lib/contract.ts` if the dashboard fields changed.
 3. Bump `SCHEMA_VERSION` minor for additive changes, major for breaking ones.

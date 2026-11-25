@@ -1,4 +1,4 @@
-# Services (Month 2+)
+# Services (Python)
 
-- [`health_stub/`](health_stub/) — optional `/api/health` (compose profile `optional`)
-- Alert / Metrics / Reporting / WebSocket / Agent services land in Month 2–3
+- [`api/`](api/) — FastAPI: Postgres, Redis consumer, REST, WebSocket, evidence, simulate
+- [`health_stub/`](health_stub/) — unused Month-1 stub; the real `/api/health` is on `api`

@@ -1,6 +1,6 @@
 """Python side of event contract v1.0.
 
-Source of truth is packages/contracts (TypeScript). This module mirrors the three things the edge
+Source of truth is contracts/events.py (Python). This module mirrors the three things the edge
 needs: priority rules, the handoff -> message wrapper and topic names. `test_agent.py` runs the shared
 golden cases in contracts/fixtures/handoff_cases.json against it, and every message is validated
 against contracts/event.schema.json before it is published.

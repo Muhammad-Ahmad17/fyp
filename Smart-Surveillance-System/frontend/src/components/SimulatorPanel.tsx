@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ALERT_EVENTS, type AlertEvent } from "@intellisafe/contracts";
+import { ALERT_EVENTS, type AlertEvent } from "../lib/contract";
 import { EVENT_LABEL } from "../lib/format";
 import { useStore } from "../store";
 import { Card, Select } from "./ui";

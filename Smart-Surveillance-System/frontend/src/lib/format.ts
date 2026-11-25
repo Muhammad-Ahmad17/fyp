@@ -1,4 +1,4 @@
-import type { AlertEvent, Priority } from "@intellisafe/contracts";
+import type { AlertEvent, Priority } from "./contract";
 
 export const EVENT_LABEL: Record<AlertEvent, string> = {
   helmet_missing: "Helmet missing",

@@ -1,5 +1,5 @@
 {
-  "_comment": "Golden cases for handoff -> message. Run by the TypeScript platform (packages/contracts/test/fixtures.test.ts) and by the Python edge agent (edge/test_agent.py), so the two implementations cannot drift apart.",
+  "_comment": "Golden cases for handoff -> message. Run by edge/test_agent.py against the Python contract.",
   "cases": [
     {
       "name": "helmet missing is HIGH",

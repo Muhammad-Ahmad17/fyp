@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://intellisafe.local/contracts/event.schema.json",
   "title": "IntelliSafe event contract v1.0",
-  "description": "Generated from packages/contracts (Zod). Do not edit by hand: run `npm run export-schema`.",
+  "description": "JSON Schema for edge validation. Source of truth is contracts/events.py (Pydantic). Keep in sync when the Python models change.",
   "$defs": {
     "SafetyMessage": {
       "oneOf": [

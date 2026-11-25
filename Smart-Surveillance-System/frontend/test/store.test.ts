@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AlertDTO, DeviceDTO, MetricsSummaryDTO } from "@intellisafe/contracts";
+import type { AlertDTO, DeviceDTO, MetricsSummaryDTO } from "../src/lib/contract";
 
 vi.mock("../src/lib/api", () => ({
   api: {
@@ -8,13 +8,19 @@ vi.mock("../src/lib/api", () => ({
     trend: vi.fn(),
     ack: vi.fn(),
     simulate: vi.fn(),
+    alarm: vi.fn(),
+    silenceAlarm: vi.fn(),
+    clearAlarm: vi.fn(),
   },
 }));
 
 import { api } from "../src/lib/api";
 import { FEED_LIMIT, cancelScheduledRefresh, useStore } from "../src/store";
 
-const mocked = api as unknown as Record<"alerts" | "summary" | "trend" | "ack" | "simulate", ReturnType<typeof vi.fn>>;
+const mocked = api as unknown as Record<
+  "alerts" | "summary" | "trend" | "ack" | "simulate" | "alarm" | "silenceAlarm" | "clearAlarm",
+  ReturnType<typeof vi.fn>
+>;
 
 const alert = (n: number, over: Partial<AlertDTO> = {}): AlertDTO => ({
   id: `id-${n}`,
@@ -60,6 +66,14 @@ beforeEach(() => {
   Object.values(mocked).forEach((m) => m.mockReset());
   mocked.summary.mockResolvedValue(summary());
   mocked.trend.mockResolvedValue({ window_hours: 1, bucket: "minute", points: [] });
+  mocked.alarm.mockResolvedValue({
+    state: "idle",
+    reason: null,
+    camera_id: null,
+    event_id: null,
+    unit: "virtual",
+    updated_at: "2026-10-28T12:00:00.000Z",
+  });
 });
 
 describe("loadAll", () => {

@@ -1,6 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 
 const apiTarget = process.env.VITE_API_TARGET ?? "http://localhost:3000";
 
@@ -14,9 +14,4 @@ export default defineConfig({
     },
   },
   build: { sourcemap: true, chunkSizeWarningLimit: 900 },
-  test: {
-    environment: "jsdom",
-    include: ["test/**/*.test.{ts,tsx}"],
-    pool: "threads",
-  },
 });

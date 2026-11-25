@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Priority } from "@intellisafe/contracts";
+import type { Priority } from "../lib/contract";
 import { PRIORITY_STYLE } from "../lib/format";
 
 export function Card({

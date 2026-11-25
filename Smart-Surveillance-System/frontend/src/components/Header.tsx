@@ -9,6 +9,7 @@ const STATE: Record<string, { label: string; dot: string }> = {
 export function Header() {
   const connection = useStore((s) => s.connection);
   const generated = useStore((s) => s.summary?.generated_at);
+  const alarm = useStore((s) => s.alarm);
   const s = STATE[connection] ?? STATE.closed!;
   return (
     <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
@@ -25,6 +26,12 @@ export function Header() {
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-400">
           {generated && <span className="hidden sm:inline">Updated {new Date(generated).toLocaleTimeString()}</span>}
+          {alarm.state === "sounding" && (
+            <span role="status" className="inline-flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/15 px-3 py-1 font-semibold text-red-300">
+              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              ALARM {alarm.reason ?? ""}
+            </span>
+          )}
           <span
             role="status"
             aria-label={`Connection: ${s.label}`}

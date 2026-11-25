@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { AlertDTO } from "@intellisafe/contracts";
+import type { AlertDTO } from "../lib/contract";
 import { EVENT_LABEL, dateTime } from "../lib/format";
 import { evidenceUrl } from "../lib/api";
 import { PriorityBadge } from "./ui";

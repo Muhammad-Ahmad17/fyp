@@ -8,7 +8,7 @@ import {
   type AlertListDTO,
   type Priority,
   type Source,
-} from "@intellisafe/contracts";
+} from "../lib/contract";
 import { api } from "../lib/api";
 import { EVENT_LABEL, dateTime } from "../lib/format";
 import { useStore } from "../store";

@@ -1,4 +1,4 @@
-import type { LiveEvent } from "@intellisafe/contracts";
+import type { LiveEvent } from "./contract";
 
 export type ConnectionState = "connecting" | "open" | "closed";
 

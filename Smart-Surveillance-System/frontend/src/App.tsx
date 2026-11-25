@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import type { AlertDTO } from "@intellisafe/contracts";
+import type { AlertDTO } from "./lib/contract";
+import { AlarmPanel } from "./components/AlarmPanel";
 import { AlertHistory } from "./components/AlertHistory";
 import { ComplianceGauge } from "./components/ComplianceGauge";
 import { Devices } from "./components/Devices";
+import { ReportPanel } from "./components/ReportPanel";
 import { EvidenceModal } from "./components/EvidenceModal";
 import { Header } from "./components/Header";
 import { Kpis } from "./components/Kpis";
@@ -50,8 +52,10 @@ export default function App() {
             <LiveFeed onOpen={setOpen} />
           </div>
           <div className="space-y-4">
+            <AlarmPanel />
             <ComplianceGauge />
             <SimulatorPanel />
+            <ReportPanel />
             <Devices />
           </div>
         </div>

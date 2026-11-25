@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import type {
+  AlarmDTO,
   AlertDTO,
   DeviceDTO,
   LiveEvent,
   MetricsSummaryDTO,
   MetricsTrendDTO,
   SimulateRequest,
-} from "@intellisafe/contracts";
+} from "./lib/contract";
 import { api } from "./lib/api";
 import type { ConnectionState } from "./lib/live";
 
@@ -25,12 +26,22 @@ export interface Latency {
   topic: string;
 }
 
+const IDLE_ALARM: AlarmDTO = {
+  state: "idle",
+  reason: null,
+  camera_id: null,
+  event_id: null,
+  unit: "virtual",
+  updated_at: "",
+};
+
 interface State {
   connection: ConnectionState;
   /** Live feed: newest first, capped at FEED_LIMIT. */
   feed: AlertDTO[];
   summary: MetricsSummaryDTO | null;
   trend: MetricsTrendDTO | null;
+  alarm: AlarmDTO;
   toasts: Toast[];
   /** Bumped on every alert/ack so the history table can refetch. */
   alertsVersion: number;
@@ -45,6 +56,8 @@ interface State {
   refreshSummary: () => Promise<void>;
   applyLive: (e: LiveEvent) => void;
   acknowledge: (id: string) => Promise<void>;
+  silenceAlarm: () => Promise<void>;
+  clearAlarm: () => Promise<void>;
   simulate: (req: SimulateRequest) => Promise<void>;
   pushToast: (t: Omit<Toast, "id">) => void;
   dismissToast: (id: string) => void;
@@ -64,6 +77,7 @@ export const useStore = create<State>((set, get) => ({
   feed: [],
   summary: null,
   trend: null,
+  alarm: IDLE_ALARM,
   toasts: [],
   alertsVersion: 0,
   sentAt: {},
@@ -75,8 +89,13 @@ export const useStore = create<State>((set, get) => ({
 
   loadAll: async () => {
     try {
-      const [list, summary, trend] = await Promise.all([api.alerts({ limit: FEED_LIMIT }), api.summary(24), api.trend(1)]);
-      set({ feed: list.items, summary, trend, loading: false, error: null, alertsVersion: get().alertsVersion + 1 });
+      const [list, summary, trend, alarm] = await Promise.all([
+        api.alerts({ limit: FEED_LIMIT }),
+        api.summary(24),
+        api.trend(1),
+        api.alarm(),
+      ]);
+      set({ feed: list.items, summary, trend, alarm, loading: false, error: null, alertsVersion: get().alertsVersion + 1 });
     } catch (err) {
       set({ loading: false, error: (err as Error).message });
     }
@@ -146,6 +165,9 @@ export const useStore = create<State>((set, get) => ({
         }));
         scheduleRefresh();
         return;
+      case "alarm":
+        set({ alarm: e.data });
+        return;
     }
   },
 
@@ -159,6 +181,24 @@ export const useStore = create<State>((set, get) => ({
       void get().refreshSummary();
     } catch (err) {
       get().pushToast({ tone: "error", title: "Could not acknowledge", body: (err as Error).message });
+    }
+  },
+
+  silenceAlarm: async () => {
+    try {
+      const alarm = await api.silenceAlarm();
+      set({ alarm });
+    } catch (err) {
+      get().pushToast({ tone: "error", title: "Could not silence alarm", body: (err as Error).message });
+    }
+  },
+
+  clearAlarm: async () => {
+    try {
+      const alarm = await api.clearAlarm();
+      set({ alarm });
+    } catch (err) {
+      get().pushToast({ tone: "error", title: "Could not clear alarm", body: (err as Error).message });
     }
   },
 

@@ -1,4 +1,4 @@
-import type { DeviceDTO } from "@intellisafe/contracts";
+import type { DeviceDTO } from "../lib/contract";
 import { formatUptime, relativeTime } from "../lib/format";
 import { useNow } from "../lib/useNow";
 import { useStore } from "../store";

@@ -1,4 +1,5 @@
 import type {
+  AlarmDTO,
   AlertDTO,
   AlertListDTO,
   AlertQuery,
@@ -6,7 +7,7 @@ import type {
   MetricsSummaryDTO,
   MetricsTrendDTO,
   SimulateRequest,
-} from "@intellisafe/contracts";
+} from "./contract";
 
 export class ApiError extends Error {
   constructor(
@@ -57,6 +58,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  alarm: () => http<AlarmDTO>("/api/alarm"),
+  silenceAlarm: () => http<AlarmDTO>("/api/alarm/silence", { method: "POST" }),
+  clearAlarm: () => http<AlarmDTO>("/api/alarm/clear", { method: "POST" }),
+  reportUrl: (hours = 24) => `/api/reports?hours=${hours}`,
 };
 
 export const evidenceUrl = (imagePath: string | null): string | null =>

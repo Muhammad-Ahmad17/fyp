@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AlertDTO } from "@intellisafe/contracts";
+import type { AlertDTO } from "../src/lib/contract";
 import App from "../src/App";
 
 class FakeSocket {
